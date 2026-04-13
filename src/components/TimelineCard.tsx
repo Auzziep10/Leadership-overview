@@ -46,6 +46,11 @@ export function TimelineCard({
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+
+  const toggleTask = (taskId: string) => {
+    setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
 
   const nodes = updates.slice().sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   
@@ -221,19 +226,23 @@ export function TimelineCard({
               const taskNodes = nodes.filter(n => n.task_id === task.id);
               return (
                 <div key={task.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '8px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{task.title}</div>
+                  <div 
+                    onClick={() => toggleTask(task.id)}
+                    title={task.details || 'Click to view log iterations'}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '8px', cursor: 'pointer' }}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>
+                      {task.title}
+                      <span style={{ color: 'var(--color-zinc-400)', fontSize: '14px', marginLeft: '6px', display: 'inline-block', transform: expandedTasks[task.id] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>›</span>
+                    </div>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
                   </div>
-                  {task.details && (
-                    <div style={{ fontSize: '13px', color: 'var(--color-zinc-600)', background: 'var(--color-zinc-50)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', marginTop: '-4px', marginBottom: '8px', whiteSpace: 'pre-wrap' }}>
-                      {task.details}
-                    </div>
-                  )}
-                  {taskNodes.length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-400)', fontStyle: 'italic', paddingLeft: '8px' }}>No timeline updates logged.</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '8px', borderLeft: '2px solid var(--color-zinc-100)' }}>
+                  
+                  {expandedTasks[task.id] && (
+                    taskNodes.length === 0 ? (
+                      <div style={{ fontSize: '12px', color: 'var(--color-zinc-400)', fontStyle: 'italic', paddingLeft: '8px' }}>No timeline updates logged.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '8px', borderLeft: '2px solid var(--color-zinc-100)' }}>
                       {taskNodes.map(n => {
                         const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
                         const messages = [...(n.thread || [])];

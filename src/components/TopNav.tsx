@@ -40,6 +40,16 @@ export function TopNav() {
   const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
   const [sigGlobalLogo, setSigGlobalLogo] = useState('');
 
+  const handleDirectFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) setter(event.target.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     if (user && isSettingsOpen) {
       setPersonalName(user.name || '');
@@ -366,7 +376,10 @@ export function TopNav() {
                         <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Profile Image</label>
                         <div style={{ display: 'flex', gap: '8px' }}>
                            <input type="text" value={sigProfileUrl} onChange={e => setSigProfileUrl(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
-                           <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                           <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
+                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigProfileUrl)} />
+                             ↑
+                           </label>
                         </div>
                       </div>
 
@@ -415,14 +428,20 @@ export function TopNav() {
                           <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Background Banner</label>
                           <div style={{ display: 'flex', gap: '8px' }}>
                              <input type="text" value={sigGlobalBanner} onChange={e => setSigGlobalBanner(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
-                             <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                             <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
+                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigGlobalBanner)} />
+                               ↑
+                             </label>
                           </div>
                         </div>
                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Global Logo</label>
                           <div style={{ display: 'flex', gap: '8px' }}>
-                             <input type="text" value={sigGlobalLogo} onChange={e => setSigGlobalLogo(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
-                             <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                             <input type="text" value={sigGlobalLogo} onChange={e => setSigGlobalLogo(e.target.value)} placeholder="Upload or link to override text..." style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                             <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
+                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigGlobalLogo)} />
+                               ↑
+                             </label>
                           </div>
                         </div>
                         <button onClick={() => alert("Global banner configurations preserved.")} style={{ background: '#000000', color: 'white', fontWeight: 600, padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '12px' }}>
@@ -433,7 +452,7 @@ export function TopNav() {
                   </div>
 
                   {/* Right Column Preview */}
-                  <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Live Preview</div>

@@ -22,6 +22,7 @@ export function Dashboard() {
   const [tasksListSubject, setTasksListSubject] = useState<string>('');
   const [tasksListItems, setTasksListItems] = useState<Task[]>([]);
   const [activeUpdateId, setActiveUpdateId] = useState<string>('');
+  const [activeTaskId, setActiveTaskId] = useState<string>('');
   
   // Form State
   const [formTitle, setFormTitle] = useState('');
@@ -34,6 +35,7 @@ export function Dashboard() {
   const [formTaskId, setFormTaskId] = useState('');
   const [formNote, setFormNote] = useState('');
   const [formReply, setFormReply] = useState('');
+  const [formTaskStatus, setFormTaskStatus] = useState('');
   
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
@@ -135,6 +137,14 @@ export function Dashboard() {
     loadDashboardData();
   };
 
+  const submitEditTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus });
+    setModalType(null);
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus('');
+    loadDashboardData();
+  };
+
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
     await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
@@ -197,6 +207,16 @@ export function Dashboard() {
     // Convert ISO to local datetime string for input
     setFormStartDate(proj.created_at ? new Date(proj.created_at).toISOString().slice(0,16) : '');
     setModalType('edit-project');
+  };
+
+  const openEditTaskModal = (task: Task) => {
+    setActiveTaskId(task.id);
+    setFormTitle(task.title);
+    setFormDetails(task.details || '');
+    setFormAssigneeIds(task.assignees || []);
+    setFormDueDate(task.due_date || '');
+    setFormTaskStatus(task.status || 'todo');
+    setModalType('edit_task');
   };
 
   const openUpdateModal = (userId: string) => {
@@ -319,6 +339,7 @@ export function Dashboard() {
                   assignedTasks={userTasks}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
+                  onEditTask={openEditTaskModal}
                 />
               );
             })}
@@ -373,6 +394,7 @@ export function Dashboard() {
                   assignedTasks={projTasks}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
+                  onEditTask={openEditTaskModal}
                 />
               </div>
               );
@@ -420,6 +442,7 @@ export function Dashboard() {
                     assignedTasks={subProjTasks}
                     currentUser={currentUser}
                     onReplyClick={openReplyModal}
+                    onEditTask={openEditTaskModal}
                   />
                 </div>
               );
@@ -496,6 +519,62 @@ export function Dashboard() {
             <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           </div>
           <button type="submit" className="auth-button">Add Task</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={modalType === 'edit_task'} onClose={() => setModalType(null)} title="Edit Active Task">
+        <form onSubmit={submitEditTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assign Staff Participants</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {users.map(u => {
+                const isSelected = formAssigneeIds.includes(u.id);
+                return (
+                  <div 
+                    key={u.id}
+                    onClick={() => setFormAssigneeIds(prev => prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id])}
+                    style={{ 
+                      padding: '8px 12px', 
+                      borderRadius: '999px', 
+                      border: isSelected ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)',
+                      background: isSelected ? 'var(--color-zinc-900)' : 'white',
+                      color: isSelected ? 'white' : 'var(--color-zinc-600)',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span>{isSelected ? '✓' : '+'}</span>
+                    <span>{u.name.split(' ')[0]}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Specific Due Date & Time</label>
+            <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Task Status</label>
+            <select value={formTaskStatus} onChange={e => setFormTaskStatus(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="todo">Pending Todo</option>
+              <option value="active">Active Execution</option>
+              <option value="review">Needs Review</option>
+              <option value="done">Completed</option>
+            </select>
+          </div>
+          
+          <button type="submit" className="auth-button">Save Changes to Task</button>
         </form>
       </Modal>
 

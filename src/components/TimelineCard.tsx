@@ -20,6 +20,7 @@ interface TimelineCardProps {
   currentUser?: { id: string; name: string; role?: string } | null;
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
+  onEditTask?: (task: any) => void;
   tasks?: { id: string; title: string }[];
   assignedTasks?: { id: string; title: string; status: string; details?: string; }[];
 }
@@ -41,6 +42,7 @@ export function TimelineCard({
   currentUser,
   onReplyClick,
   onEditDates,
+  onEditTask,
   tasks = [],
   assignedTasks = []
 }: TimelineCardProps) {
@@ -235,7 +237,17 @@ export function TimelineCard({
                       {task.title}
                       <span style={{ color: 'var(--color-zinc-400)', fontSize: '14px', marginLeft: '6px', display: 'inline-block', transform: expandedTasks[task.id] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>›</span>
                     </div>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {onEditTask && (
+                        <div 
+                          onClick={(e) => { e.stopPropagation(); onEditTask(task); }} 
+                          style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-600)', background: 'white', border: '1px solid var(--color-zinc-200)', padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}
+                        >
+                          Edit
+                        </div>
+                      )}
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
+                    </div>
                   </div>
                   
                   {expandedTasks[task.id] && (

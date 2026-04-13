@@ -137,6 +137,10 @@ export const createTask = async (projectId: string, title: string, assignees: st
   return docRef.id;
 };
 
+export const updateTask = async (taskId: string, updates: Partial<any>) => {
+  await updateDoc(doc(db, 'tasks', taskId), updates);
+};
+
 export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> => {
   const q = query(collection(db, 'task_updates'), where('task_id', '==', taskId));
   const snap = await getDocs(q);

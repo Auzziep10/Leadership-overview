@@ -144,7 +144,7 @@ body {
 }
 
 .card-left {
-  flex: 0 0 200px;
+  flex: 0 0 160px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -283,7 +283,7 @@ body {
 
 /* Buttons and Right Side */
 .card-right {
-  flex: 0 0 150px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 12px;

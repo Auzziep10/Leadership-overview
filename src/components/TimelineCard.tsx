@@ -182,13 +182,13 @@ export function TimelineCard({
         
         <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
           {onEditDates && (
-            <button className="pill-button" onClick={onEditDates} style={{ flex: 1, padding: '0 12px', justifyContent: 'center' }}>
+            <button className="pill-button" onClick={onEditDates} style={{ flex: 1, justifyContent: 'center' }}>
               <span style={{ fontSize: '11px', fontWeight: 700 }}>Edit Dates</span>
             </button>
           )}
 
           {action2Label && (
-            <button className="pill-button" onClick={action2Label.includes('Tasks') ? () => setIsExpanded(!isExpanded) : onAction2} style={{ flex: 1, padding: '0 12px', justifyContent: 'center', gap: '4px' }}>
+            <button className="pill-button" onClick={action2Label.includes('Tasks') ? () => setIsExpanded(!isExpanded) : onAction2} style={{ flex: 1, justifyContent: 'center', gap: '4px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>{action2Label}</span>
               {action2Label.includes('Tasks') ? (
                  <ChevronDown size={14} color="var(--color-zinc-500)" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />

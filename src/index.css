@@ -318,11 +318,15 @@ body {
   align-items: flex-start;
 }
 
-/* Mobile Responsiveness Rules */
-@media (max-width: 768px) {
+/* Medium Desktop Breakpoint */
+@media (max-width: 960px) {
   .signature-layout-grid {
     flex-direction: column;
   }
+}
+
+/* Mobile Responsiveness Rules */
+@media (max-width: 768px) {
   .header-nav {
     padding: 0 16px;
     height: auto;

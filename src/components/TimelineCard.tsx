@@ -24,8 +24,10 @@ interface TimelineCardProps {
   onActionItem?: (task: any) => void;
   onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
-  tasks?: { id: string; title: string }[];
-  assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; }[];
+  tasks?: { id: string; title: string, project_id?: string }[];
+  projects?: { id: string; title: string, [key: string]: any }[];
+  groupByProject?: boolean;
+  assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; project_id?: string; }[];
 }
 
 export function TimelineCard({
@@ -49,12 +51,15 @@ export function TimelineCard({
   onActionItem,
   onLogUpdateClick,
   onReorderTasks,
+  projects = [],
+  groupByProject = false,
   tasks = [],
   assignedTasks = []
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localTasks, setLocalTasks] = useState(assignedTasks);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -236,11 +241,12 @@ export function TimelineCard({
       >
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {localTasks.length > 0 ? (
-            localTasks.map((task, idx) => {
-              const taskNodes = nodes.filter(n => n.task_id === task.id);
-              return (
-                <div 
-                  key={task.id} 
+            (() => {
+              const renderTask = (task: any, idx: number) => {
+                const taskNodes = nodes.filter(n => n.task_id === task.id);
+                return (
+                  <div 
+                    key={task.id} 
                   draggable
                   onDragStart={() => { setDraggedIndex(idx); }}
                   onDragOver={(e) => {
@@ -369,7 +375,41 @@ export function TimelineCard({
                   )}
                 </div>
               );
-            })
+              };
+
+              if (groupByProject && projects && projects.length > 0) {
+                const grouped = localTasks.reduce((acc, t) => {
+                  const pid = t.project_id || 'unassigned';
+                  if (!acc[pid]) acc[pid] = [];
+                  acc[pid].push(t);
+                  return acc;
+                }, {} as Record<string, typeof localTasks>);
+                
+                return Object.entries(grouped).map(([pid, pTasks]) => {
+                  const pName = projects.find(p => p.id === pid)?.title || 'Standalone Tasks';
+                  return (
+                    <div key={pid} style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
+                      <div 
+                        onClick={() => setExpandedProjects(prev => ({ ...prev, [pid]: !prev[pid] }))}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                      >
+                        <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-zinc-500)', letterSpacing: '0.05em' }}>
+                          PROJECT: {pName}
+                        </div>
+                        <span style={{ transform: expandedProjects[pid] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'var(--color-zinc-400)' }}>›</span>
+                      </div>
+                      {expandedProjects[pid] && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '8px' }}>
+                          {pTasks.map(t => renderTask(t, -1))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              }
+
+              return localTasks.map((task, idx) => renderTask(task, idx));
+            })()
           ) : (
             <>
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Timeline Logs</div>

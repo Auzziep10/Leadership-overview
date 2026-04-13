@@ -377,6 +377,8 @@ export function Dashboard() {
                   onAction2={() => userTasks.length > 0 ? openTasksList(`${user.name}'s`, userTasks) : undefined}
                   startDate={shiftStart.toISOString()}
                   endDate={shiftEnd.toISOString()}
+                  projects={projects}
+                  groupByProject={true}
                   users={users}
                   tasks={tasks}
                   assignedTasks={userTasks}

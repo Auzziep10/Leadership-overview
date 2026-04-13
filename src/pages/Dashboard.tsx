@@ -36,6 +36,7 @@ export function Dashboard() {
   const [formNote, setFormNote] = useState('');
   const [formReply, setFormReply] = useState('');
   const [formTaskStatus, setFormTaskStatus] = useState('');
+  const [formTaskProjectId, setFormTaskProjectId] = useState('');
   
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
@@ -139,9 +140,9 @@ export function Dashboard() {
 
   const submitEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus });
+    await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus, project_id: formTaskProjectId });
     setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus(''); setFormTaskProjectId('');
     loadDashboardData();
   };
 
@@ -216,6 +217,7 @@ export function Dashboard() {
     setFormAssigneeIds(task.assignees || []);
     setFormDueDate(task.due_date || '');
     setFormTaskStatus(task.status || 'todo');
+    setFormTaskProjectId(task.project_id || '');
     setModalType('edit_task');
   };
 
@@ -562,6 +564,14 @@ export function Dashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Specific Due Date & Time</label>
             <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Associated Project</label>
+            <select value={formTaskProjectId} onChange={e => setFormTaskProjectId(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="" disabled>Select Project Destination</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

@@ -172,28 +172,32 @@ export function TimelineCard({
       </div>
 
       <div className="card-right">
-        {onEditDates && (
-          <button onClick={onEditDates} style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', color: 'var(--color-zinc-600)', fontSize: '10px', fontWeight: 600, cursor: 'pointer', padding: '4px 8px', width: '100%', marginBottom: '4px' }}>
-            Edit Dates
-          </button>
-        )}
         {action1Label && (
-          <button className="pill-button" onClick={onAction1}>
+          <button className="pill-button" onClick={onAction1} style={{ marginBottom: '8px' }}>
             <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '11px', fontWeight: 700 }}>{action1Label}</span>
             </div>
           </button>
         )}
-        {action2Label && (
-          <button className="pill-button" onClick={action2Label.includes('Tasks') ? () => setIsExpanded(!isExpanded) : onAction2}>
-            <span style={{ fontSize: '11px', fontWeight: 700 }}>{action2Label}</span>
-            {action2Label.includes('Tasks') ? (
-               <ChevronDown size={14} color="var(--color-zinc-500)" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />
-            ) : (
-               <Download size={14} color="var(--color-zinc-500)" />
-            )}
-          </button>
-        )}
+        
+        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          {onEditDates && (
+            <button className="pill-button" onClick={onEditDates} style={{ flex: 1, padding: '0 12px', justifyContent: 'center' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700 }}>Edit Dates</span>
+            </button>
+          )}
+
+          {action2Label && (
+            <button className="pill-button" onClick={action2Label.includes('Tasks') ? () => setIsExpanded(!isExpanded) : onAction2} style={{ flex: 1, padding: '0 12px', justifyContent: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>{action2Label}</span>
+              {action2Label.includes('Tasks') ? (
+                 <ChevronDown size={14} color="var(--color-zinc-500)" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />
+              ) : (
+                 <Download size={14} color="var(--color-zinc-500)" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
       </div>
       <div 

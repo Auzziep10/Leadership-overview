@@ -37,6 +37,7 @@ export function Dashboard() {
   const [formReply, setFormReply] = useState('');
   const [formTaskStatus, setFormTaskStatus] = useState('');
   const [formTaskProjectId, setFormTaskProjectId] = useState('');
+  const [formActionItem, setFormActionItem] = useState('');
   
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
@@ -141,16 +142,22 @@ export function Dashboard() {
   const submitEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus, project_id: formTaskProjectId });
+    if (formActionItem && currentUser) {
+      await addTaskUpdate(activeTaskId, currentUser.id, formActionItem, true);
+    }
     setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus(''); setFormTaskProjectId('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus(''); setFormTaskProjectId(''); setFormActionItem('');
     loadDashboardData();
   };
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
+    const newTaskId = await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
+    if (formActionItem && currentUser) {
+      await addTaskUpdate(newTaskId, currentUser.id, formActionItem, true);
+    }
     setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormActionItem('');
     loadDashboardData();
   };
 
@@ -216,6 +223,7 @@ export function Dashboard() {
 
   const openTaskModal = (projectId: string) => {
     setActiveProjectId(projectId);
+    setFormActionItem('');
     setModalType('task');
   };
 
@@ -235,6 +243,7 @@ export function Dashboard() {
     setFormDueDate(task.due_date || '');
     setFormTaskStatus(task.status || 'todo');
     setFormTaskProjectId(task.project_id || '');
+    setFormActionItem('');
     setModalType('edit_task');
   };
 
@@ -511,6 +520,13 @@ export function Dashboard() {
           <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           
+          {(currentUser?.role === 'owner' || currentUser?.role === 'admin') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Add Initial Action Item / Directive (Logs to Timeline)</label>
+              <textarea placeholder="Write a specialized action item required by the participant..." value={formActionItem} onChange={e => setFormActionItem(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assign Staff Participants</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -556,6 +572,13 @@ export function Dashboard() {
           <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           
+          {(currentUser?.role === 'owner' || currentUser?.role === 'admin') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Add Additional Action Item / Directive (Logs to Timeline)</label>
+              <textarea placeholder="Write a specialized action item required by the participant..." value={formActionItem} onChange={e => setFormActionItem(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assign Staff Participants</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>

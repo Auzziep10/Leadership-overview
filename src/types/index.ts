@@ -4,8 +4,9 @@ export interface User {
   email: string;
   role: string; // Migrating to dynamic roles instead of hardcoded strings
   role_id?: string;
-  reports_to?: string; // The ID of the user they report to for hierarchy
+  reports_to?: string; 
   initials: string;
+  avatar_url?: string;
 }
 
 export interface Role {

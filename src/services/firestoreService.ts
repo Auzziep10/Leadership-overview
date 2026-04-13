@@ -26,6 +26,10 @@ export const updateUserRoleAndHierarchy = async (userId: string, role_id: string
   });
 };
 
+export const updateUserAvatar = async (userId: string, avatarDataUrl: string) => {
+  await updateDoc(doc(db, 'users', userId), { avatar_url: avatarDataUrl });
+};
+
 // --- PROJECTS ---
 export const fetchProjects = async (): Promise<Project[]> => {
   const snap = await getDocs(collection(db, 'projects'));

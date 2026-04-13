@@ -265,6 +265,7 @@ export function Dashboard() {
                 <TimelineCard 
                   key={user.id}
                   initials={user.initials}
+                  avatarUrl={user.avatar_url}
                   title={user.name} 
                   subtitle={`${userTasks.length} ACTIVE TASKS | ${userProjectIds.size} PROJECTS`} 
                   color="#f43f5e" 

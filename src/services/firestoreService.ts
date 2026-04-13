@@ -1,7 +1,7 @@
 import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc } from 'firebase/firestore';
 import { db, firebaseConfig } from './firebaseConfig';
 import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
 import type { User, Role, Project, Task, TaskUpdate } from '../types';
 
 // --- ROLES ---
@@ -46,6 +46,24 @@ export const updateUserRoleAndHierarchy = async (userId: string, role_id: string
   if (systemRole) updates.role = systemRole.toLowerCase();
   
   await updateDoc(doc(db, 'users', userId), updates);
+};
+
+export const updatePersonalDetails = async (userId: string, name: string, email: string, phone: string, newPassword?: string) => {
+  const authInstance = getAuth();
+  const cUser = authInstance.currentUser;
+  
+  if (cUser) {
+    if (newPassword && newPassword.trim() !== '') {
+      await updatePassword(cUser, newPassword);
+    }
+    if (email !== cUser.email) {
+      await updateEmail(cUser, email);
+    }
+  }
+
+  await updateDoc(doc(db, 'users', userId), {
+    name, email, phone, initials: name.charAt(0).toUpperCase()
+  });
 };
 
 export const updateUserAvatar = async (userId: string, avatarDataUrl: string) => {

@@ -7,6 +7,7 @@ export interface User {
   reports_to?: string; 
   initials: string;
   avatar_url?: string;
+  phone?: string;
 }
 
 export interface Role {

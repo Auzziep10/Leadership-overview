@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Search, Menu, LogOut } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import { auth } from '../services/firebaseConfig';
 import { useAuth } from '../services/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Modal } from './Modal';
-import { updateUserAvatar } from '../services/firestoreService';
+import { updateUserAvatar, updatePersonalDetails } from '../services/firestoreService';
 
 export function TopNav() {
   const { user } = useAuth();
@@ -17,6 +17,21 @@ export function TopNav() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  const [personalName, setPersonalName] = useState('');
+  const [personalEmail, setPersonalEmail] = useState('');
+  const [personalPhone, setPersonalPhone] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingDetails, setIsUpdatingDetails] = useState(false);
+
+  useEffect(() => {
+    if (user && isSettingsOpen) {
+      setPersonalName(user.name || '');
+      setPersonalEmail(user.email || '');
+      setPersonalPhone(user.phone || '');
+      setNewPassword('');
+    }
+  }, [user, isSettingsOpen]);
 
   const isStaff = user?.role === 'staff';
 
@@ -60,6 +75,21 @@ export function TopNav() {
       }
     };
     img.src = imageSrc;
+  };
+
+  const handleSaveDetails = async () => {
+    if (!user) return;
+    setIsUpdatingDetails(true);
+    try {
+      await updatePersonalDetails(user.id, personalName, personalEmail, personalPhone, newPassword);
+      setNewPassword('');
+      alert("Details saved successfully!");
+      window.location.reload();
+    } catch (e: any) {
+      alert("Error saving security details. Please log out completely, log back in immediately, and try again so Firebase registers a fresh handshake.\n\n" + e.message);
+    } finally {
+      setIsUpdatingDetails(false);
+    }
   };
   
   return (
@@ -145,7 +175,28 @@ export function TopNav() {
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Click or Drag a Photo Here</span>
               </div>
               
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <hr style={{ border: 'none', borderTop: '1px solid var(--color-zinc-100)', margin: '8px 0' }} />
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '8px' }}>Personal Data</div>
+                <input type="text" placeholder="Full Name" value={personalName} onChange={e => setPersonalName(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                <input type="email" placeholder="Email Address" value={personalEmail} onChange={e => setPersonalEmail(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                <input type="tel" placeholder="Phone Number" value={personalPhone} onChange={e => setPersonalPhone(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                
+                <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '16px' }}>Account Security</div>
+                <input type="password" placeholder="New Password (leave blank to keep current)" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+
+                <button 
+                  onClick={handleSaveDetails}
+                  disabled={isUpdatingDetails}
+                  className="auth-button"
+                  style={{ width: '100%', marginTop: '8px', padding: '12px', borderRadius: '8px', opacity: isUpdatingDetails ? 0.6 : 1 }}
+                >
+                  {isUpdatingDetails ? 'Applying Changes...' : 'Save Local Details'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
                  <button onClick={() => auth.signOut()} style={{ background: 'transparent', border: '1px solid var(--color-zinc-300)', color: 'var(--color-zinc-600)', padding: '6px 16px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                    Sign Out of Account
                  </button>

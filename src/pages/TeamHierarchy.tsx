@@ -83,8 +83,8 @@ export function TeamHierarchy() {
     
     return (
       <div key={user.id} style={{ marginLeft: depth > 0 ? '40px' : '0' }}>
-        <div className="card-container" style={{ padding: '16px 24px', marginBottom: '16px' }}>
-          <div className="card-left" style={{ flex: '1', gap: '24px' }}>
+        <div className="card-container" style={{ padding: '16px 24px', marginBottom: '16px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <div className="card-left" style={{ flex: '1', gap: '24px', minWidth: '280px' }}>
             <div style={{
               width: '40px',
               height: '40px',

@@ -271,7 +271,13 @@ export function Dashboard() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {view === 'team' && (
+        {view === 'team' && (() => {
+          const shiftStart = new Date();
+          shiftStart.setHours(8, 0, 0, 0);
+          const shiftEnd = new Date();
+          shiftEnd.setHours(18, 0, 0, 0);
+          
+          return (
           <>
             {users.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No staff found. Create an account first.</div>}
             {users.filter(user => {
@@ -305,7 +311,8 @@ export function Dashboard() {
                   onAction1={() => openUpdateModal(user.id)}
                   action2Label={userTasks.length > 0 ? "View Active Tasks" : ""}
                   onAction2={() => userTasks.length > 0 ? openTasksList(`${user.name}'s`, userTasks) : undefined}
-                  startDate={userUpdates.length > 0 ? userUpdates[0].created_at : undefined}
+                  startDate={shiftStart.toISOString()}
+                  endDate={shiftEnd.toISOString()}
                   users={users}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
@@ -313,7 +320,7 @@ export function Dashboard() {
               );
             })}
           </>
-        )}
+        )})()}
 
         {view === 'projects' && (
           <>

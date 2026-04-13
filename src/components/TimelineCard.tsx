@@ -84,10 +84,10 @@ export function TimelineCard({
 
       <div className="timeline-track">
         <div className="timeline-date timeline-date-start">
-          {format(new Date(tStart), 'MMM d, yyyy')}
+          {timeSpan <= 24 * 60 * 60 * 1000 ? format(new Date(tStart), 'h:mm a') : format(new Date(tStart), 'MMM d, yyyy')}
         </div>
         <div className="timeline-date timeline-date-end">
-          {format(new Date(tEnd), 'MMM d, yyyy')}
+          {timeSpan <= 24 * 60 * 60 * 1000 ? format(new Date(tEnd), 'h:mm a') : format(new Date(tEnd), 'MMM d, yyyy')}
         </div>
 
         <div className="timeline-line"></div>

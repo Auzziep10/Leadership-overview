@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Search, Menu, LogOut } from 'lucide-react';
+import { Search, Menu, LogOut, Bell } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import { auth } from '../services/firebaseConfig';
 import { useAuth } from '../services/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Modal } from './Modal';
 import { updateUserAvatar, updatePersonalDetails } from '../services/firestoreService';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '../services/firebaseConfig';
 
 export function TopNav() {
   const { user } = useAuth();
@@ -24,6 +26,8 @@ export function TopNav() {
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false);
 
+  const [notificationsCount, setNotificationsCount] = useState(0);
+
   useEffect(() => {
     if (user && isSettingsOpen) {
       setPersonalName(user.name || '');
@@ -32,6 +36,19 @@ export function TopNav() {
       setNewPassword('');
     }
   }, [user, isSettingsOpen]);
+
+  useEffect(() => {
+    const handleNotifications = (e: any) => setNotificationsCount(e.detail);
+    window.addEventListener('update-notifications', handleNotifications);
+    return () => window.removeEventListener('update-notifications', handleNotifications);
+  }, []);
+
+  const handleClearNotifications = async () => {
+    if (!user) return;
+    setNotificationsCount(0);
+    await updateDoc(doc(db, 'users', user.id), { last_seen_notifications: new Date().toISOString() });
+    window.dispatchEvent(new CustomEvent('notifications-cleared'));
+  };
 
   const isStaff = user?.role === 'staff';
 

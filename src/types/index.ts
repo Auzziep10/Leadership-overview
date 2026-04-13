@@ -8,6 +8,7 @@ export interface User {
   initials: string;
   avatar_url?: string;
   phone?: string;
+  last_seen_notifications?: string;
 }
 
 export interface Role {

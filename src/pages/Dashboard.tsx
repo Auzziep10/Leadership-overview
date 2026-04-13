@@ -28,7 +28,7 @@ export function Dashboard() {
   const [formDesc, setFormDesc] = useState('');
   const [formEndDate, setFormEndDate] = useState('');
   const [formStartDate, setFormStartDate] = useState('');
-  const [formAssigneeId, setFormAssigneeId] = useState('');
+  const [formAssigneeIds, setFormAssigneeIds] = useState<string[]>([]);
   const [formDueDate, setFormDueDate] = useState('');
   const [formTaskId, setFormTaskId] = useState('');
   const [formNote, setFormNote] = useState('');
@@ -62,6 +62,34 @@ export function Dashboard() {
         allUpdates.push(...tUpdates);
       }
       setUpdates(allUpdates);
+
+      // Notification calculation
+      if (currentUser) {
+        const lastSeen = currentUser.last_seen_notifications || '2000-01-01T00:00:00Z';
+        let unreadCount = 0;
+        
+        t.forEach(task => { // New task assigned
+          if (task.assignees?.includes(currentUser.id) && task.created_at > lastSeen) unreadCount++;
+        });
+
+        allUpdates.forEach(upd => { // Updates or threads
+          const task = t.find(task => task.id === upd.task_id);
+          if (task && (task.assignees?.includes(currentUser.id) || currentUser.role === 'owner' || currentUser.role === 'admin')) {
+              // Note itself
+              if (upd.created_at > lastSeen && upd.author_id !== currentUser.id) unreadCount++;
+              // Threads
+              if (upd.thread) {
+                  upd.thread.forEach(msg => {
+                      if (msg.created_at > lastSeen && msg.author_id !== currentUser.id) unreadCount++;
+                  });
+              }
+              // Legacy Replies
+              if (upd.admin_reply && upd.admin_reply_by !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
+              if (upd.user_response && upd.author_id !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
+          }
+        });
+        window.dispatchEvent(new CustomEvent('update-notifications', { detail: unreadCount }));
+      }
       
     } catch (e) {
       console.error(e);
@@ -76,13 +104,16 @@ export function Dashboard() {
     // Listen for TopNav calls
     const handleOpenProject = () => setModalType('project');
     const handleSearch = (e: any) => setSearchQuery(e.detail);
+    const handleClearing = () => loadDashboardData();
     
     window.addEventListener('open-create-project', handleOpenProject);
     window.addEventListener('global-search', handleSearch);
+    window.addEventListener('notifications-cleared', handleClearing);
     
     return () => {
       window.removeEventListener('open-create-project', handleOpenProject);
       window.removeEventListener('global-search', handleSearch);
+      window.removeEventListener('notifications-cleared', handleClearing);
     };
   }, [currentUser]);
 
@@ -105,9 +136,9 @@ export function Dashboard() {
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createTask(activeProjectId, formTitle, formAssigneeId ? [formAssigneeId] : [], formDueDate, 'active');
+    await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, 'active');
     setModalType(null);
-    setFormTitle(''); setFormAssigneeId(''); setFormDueDate('');
+    setFormTitle(''); setFormAssigneeIds([]); setFormDueDate('');
     loadDashboardData();
   };
 
@@ -419,10 +450,14 @@ export function Dashboard() {
       <Modal isOpen={modalType === 'task'} onClose={() => setModalType(null)} title="Assign New Task">
         <form onSubmit={submitTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
-          <select value={formAssigneeId} onChange={e => setFormAssigneeId(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
-            <option value="" disabled>Select Staff Member</option>
-            {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.role})</option>)}
-          </select>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assign Staff (Hold Ctrl or drag to select multiple)</label>
+            <select multiple value={formAssigneeIds} onChange={e => setFormAssigneeIds(Array.from(e.target.selectedOptions, option => option.value))} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white', minHeight: '90px', resize: 'vertical' }}>
+              {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.role})</option>)}
+            </select>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Specific Due Date & Time</label>
             <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />

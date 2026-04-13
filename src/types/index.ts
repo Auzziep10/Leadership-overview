@@ -32,6 +32,7 @@ export interface Task {
   id: string;
   project_id: string;
   title: string;
+  details?: string;
   assignees: string[]; // User IDs
   due_date?: string; // Newly added
   created_at: string;

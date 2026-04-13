@@ -21,7 +21,7 @@ interface TimelineCardProps {
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
   tasks?: { id: string; title: string }[];
-  assignedTasks?: { id: string; title: string; status: string }[];
+  assignedTasks?: { id: string; title: string; status: string; details?: string; }[];
 }
 
 export function TimelineCard({
@@ -225,6 +225,11 @@ export function TimelineCard({
                     <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{task.title}</div>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
                   </div>
+                  {task.details && (
+                    <div style={{ fontSize: '13px', color: 'var(--color-zinc-600)', background: 'var(--color-zinc-50)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', marginTop: '-4px', marginBottom: '8px', whiteSpace: 'pre-wrap' }}>
+                      {task.details}
+                    </div>
+                  )}
                   {taskNodes.length === 0 ? (
                     <div style={{ fontSize: '12px', color: 'var(--color-zinc-400)', fontStyle: 'italic', paddingLeft: '8px' }}>No timeline updates logged.</div>
                   ) : (

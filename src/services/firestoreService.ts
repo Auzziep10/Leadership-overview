@@ -124,10 +124,11 @@ export const fetchTasks = async (): Promise<Task[]> => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Task));
 };
 
-export const createTask = async (projectId: string, title: string, assignees: string[], due_date?: string, status: string = 'todo') => {
+export const createTask = async (projectId: string, title: string, assignees: string[], due_date?: string, details?: string, status: string = 'todo') => {
   const docRef = await addDoc(collection(db, 'tasks'), {
     project_id: projectId,
     title,
+    details: details || null,
     assignees,
     status,
     due_date: due_date || null,

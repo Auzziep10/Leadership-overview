@@ -26,6 +26,7 @@ export function Dashboard() {
   // Form State
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
+  const [formDetails, setFormDetails] = useState('');
   const [formEndDate, setFormEndDate] = useState('');
   const [formStartDate, setFormStartDate] = useState('');
   const [formAssigneeIds, setFormAssigneeIds] = useState<string[]>([]);
@@ -136,9 +137,9 @@ export function Dashboard() {
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, 'active');
+    await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
     setModalType(null);
-    setFormTitle(''); setFormAssigneeIds([]); setFormDueDate('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate('');
     loadDashboardData();
   };
 
@@ -456,6 +457,7 @@ export function Dashboard() {
       <Modal isOpen={modalType === 'task'} onClose={() => setModalType(null)} title="Assign New Task">
         <form onSubmit={submitTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assign Staff Participants</label>

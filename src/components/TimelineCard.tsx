@@ -173,10 +173,8 @@ export function TimelineCard({
 
       <div className="card-right">
         {action1Label && (
-          <button className="pill-button" onClick={onAction1} style={{ marginBottom: '8px' }}>
-            <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700 }}>{action1Label}</span>
-            </div>
+          <button className="pill-button" onClick={onAction1} style={{ width: '100%', justifyContent: 'center' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>{action1Label}</span>
           </button>
         )}
         

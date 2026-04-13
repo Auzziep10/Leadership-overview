@@ -394,7 +394,8 @@ body {
 
   .card-right {
     flex: unset;
-    flex-direction: row;
+    flex-direction: column;
+    gap: 8px;
     width: 100%;
     justify-content: space-between;
     border-top: 1px solid var(--color-zinc-100);

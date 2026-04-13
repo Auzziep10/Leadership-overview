@@ -28,6 +28,8 @@ export function TopNav() {
 
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [settingsTab, setSettingsTab] = useState<'profile' | 'signature'>('profile');
+  const [sigTitle, setSigTitle] = useState('');
+  const [sigLocation, setSigLocation] = useState('');
 
   useEffect(() => {
     if (user && isSettingsOpen) {
@@ -35,6 +37,8 @@ export function TopNav() {
       setPersonalEmail(user.email || '');
       setPersonalPhone(user.phone || '');
       setNewPassword('');
+      setSigTitle(user.role || 'Title & Tagline');
+      setSigLocation('Location Details');
     }
   }, [user, isSettingsOpen]);
 
@@ -154,14 +158,9 @@ export function TopNav() {
           <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
           <td width="368" valign="top">
             <div style="font-weight: 700; font-size: 16px; color: #18181b; margin: 0; padding: 0; letter-spacing: -0.02em;">${user.name}</div>
-            <div style="font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; margin: 4px 0 0 0; padding: 0;">${user.role || 'COMPANY STAFF'}</div>
-            <div style="font-size: 12px; color: #52525b; margin: 16px 0 0 0; padding: 0;">
-              <span style="font-weight: 700; color: #18181b;">E</span> &nbsp;<a href="mailto:${user.email}" style="color: #52525b; text-decoration: none;">${user.email}</a>
-            </div>
-            ${user.phone ? `<div style="font-size: 12px; color: #52525b; margin: 4px 0 0 0; padding: 0;">
-              <span style="font-weight: 700; color: #18181b;">P</span> &nbsp;<a href="tel:${user.phone}" style="color: #52525b; text-decoration: none;">${user.phone}</a>
-            </div>` : ''}
-            <div style="margin-top: 20px; border-top: 1px solid #e4e4e7; padding-top: 16px; padding-bottom: 24px;">
+            <div style="font-size: 10px; color: #71717a; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
+            <div style="font-size: 10px; color: #a1a1aa; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
+            <div style="margin-top: 16px; border-top: 1px solid #e4e4e7; padding-top: 16px; padding-bottom: 24px;">
               <div style="font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #18181b; margin: 0; padding: 0;">Leadership Overview Inc.</div>
               <div style="font-size: 10px; color: #a1a1aa; margin: 4px 0 0 0;">CONFIDENTIAL INTERNAL DOMAIN</div>
             </div>
@@ -243,9 +242,7 @@ export function TopNav() {
             </div>
           ) : (
             <>
-              <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>
-                Upload a new profile picture. This icon will appear across all timelines and project boards.
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--color-zinc-200)', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--color-zinc-200)', marginBottom: '24px', marginTop: '12px' }}>
                 <button 
                   onClick={() => setSettingsTab('profile')} 
                   style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', borderBottom: settingsTab === 'profile' ? '2px solid var(--color-zinc-900)' : '2px solid transparent', fontWeight: 600, color: settingsTab === 'profile' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)', cursor: 'pointer', fontSize: '13px' }}
@@ -301,22 +298,46 @@ export function TopNav() {
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', lineHeight: '1.5' }}>
-                    Your signature is programmatically minified and packaged using a 85/15 structural table grid. It avoids dynamic padding elements so mail engines won't stretch or break the layout boundaries.
-                  </div>
-                  
-                  <div style={{ background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', justifyContent: 'center' }}>
-                    <div dangerouslySetInnerHTML={{ __html: generateSignatureHTML() }} />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-start' }}>
+                  {/* Left Column Controls */}
+                  <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px' }}>
+                     <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'var(--font-serif)', borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        👤 Personal Details
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Full Name (From DB)</label>
+                       <input type="text" value={user.name} disabled style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', backgroundColor: 'var(--color-zinc-50)', color: 'var(--color-zinc-500)', fontSize: '12px' }} />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Title & Tagline</label>
+                       <input type="text" value={sigTitle} onChange={e => setSigTitle(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px' }} />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Location</label>
+                       <input type="text" value={sigLocation} onChange={e => setSigLocation(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px' }} />
+                     </div>
                   </div>
 
-                  <button 
-                    onClick={copySignature}
-                    className="auth-button"
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px' }}
-                  >
-                    Copy to Clipboard Memory
-                  </button>
+                  {/* Right Column Preview */}
+                  <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Live Preview</div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-zinc-500)' }}>What you see is what gets copied.</div>
+                      </div>
+                      <button 
+                        onClick={copySignature}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Signature
+                      </button>
+                    </div>
+
+                    <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', justifyContent: 'flex-start', overflowX: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <div dangerouslySetInnerHTML={{ __html: generateSignatureHTML() }} />
+                    </div>
+                  </div>
                 </div>
               )}
             </>

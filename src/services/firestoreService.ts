@@ -43,12 +43,35 @@ export const createProject = async (title: string, description: string, end_date
   return docRef.id;
 };
 
-export const updateProject = async (projectId: string, end_date?: string, start_date?: string) => {
+export const updateProject = async (projectId: string, end_date?: string, start_date?: string, status?: string) => {
   const updates: any = {};
   if (end_date !== undefined) updates.end_date = end_date || null;
   if (start_date) updates.created_at = start_date;
+  if (status) updates.status = status;
   
   await updateDoc(doc(db, 'projects', projectId), updates);
+};
+
+export const createCustomerLead = async (name: string, company: string, email: string) => {
+  const docRef = await addDoc(collection(db, 'projects'), {
+    title: name,
+    customer_company: company,
+    customer_email: email,
+    description: `Initial contact and lead tracking pipeline`,
+    status: 'lead',
+    created_at: new Date().toISOString()
+  });
+  
+  // Attach default invisible tracking task to act as the native timeline anchor
+  await addDoc(collection(db, 'tasks'), {
+    project_id: docRef.id,
+    title: 'Pipeline tracking',
+    assignees: [],
+    status: 'active',
+    created_at: new Date().toISOString()
+  });
+  
+  return docRef.id;
 };
 
 // --- TASKS & UPDATES ---

@@ -19,8 +19,10 @@ export interface Project {
   title: string;
   description: string;
   created_at: string;
-  end_date?: string; // Newly added
-  status: 'active' | 'completed' | 'archived';
+  end_date?: string;
+  status: 'active' | 'completed' | 'archived' | 'lead';
+  customer_company?: string;
+  customer_email?: string;
 }
 
 export interface Task {

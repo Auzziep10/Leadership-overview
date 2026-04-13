@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, addThreadMessage } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
   const { user: currentUser } = useAuth();
-  const [view, setView] = useState<'team' | 'projects'>('team');
+  const [view, setView] = useState<'team' | 'projects' | 'leads'>('team');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -16,7 +16,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | null>(null);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [activeUserId, setActiveUserId] = useState<string>('');
   const [tasksListSubject, setTasksListSubject] = useState<string>('');
@@ -33,6 +33,10 @@ export function Dashboard() {
   const [formTaskId, setFormTaskId] = useState('');
   const [formNote, setFormNote] = useState('');
   const [formReply, setFormReply] = useState('');
+  
+  const [formLeadName, setFormLeadName] = useState('');
+  const [formLeadCompany, setFormLeadCompany] = useState('');
+  const [formLeadEmail, setFormLeadEmail] = useState('');
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -125,6 +129,31 @@ export function Dashboard() {
     }
   };
 
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createCustomerLead(formLeadName, formLeadCompany, formLeadEmail);
+    setModalType(null);
+    setFormLeadName(''); setFormLeadCompany(''); setFormLeadEmail('');
+    loadDashboardData();
+  };
+
+  const submitLeadNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentUser) {
+      await addTaskUpdate(formTaskId, currentUser.id, formNote);
+      setModalType(null);
+      setFormTaskId(''); setFormNote('');
+      loadDashboardData();
+    }
+  };
+
+  const convertLead = async (projectId: string) => {
+    if(window.confirm('Convert this lead pipe into an active functional project view?')) {
+      await updateProject(projectId, undefined, undefined, 'active');
+      loadDashboardData();
+    }
+  };
+
   const openTaskModal = (projectId: string) => {
     setActiveProjectId(projectId);
     setModalType('task');
@@ -191,6 +220,23 @@ export function Dashboard() {
         >
           Project Overview
         </button>
+        {currentUser?.role === 'owner' && (
+          <button 
+            onClick={() => setView('leads')}
+            style={{ 
+              padding: '8px 24px', 
+              borderRadius: '99px',
+              border: '1px solid var(--color-brand-accent)',
+              background: view === 'leads' ? 'var(--color-brand-accent)' : 'white',
+              color: view === 'leads' ? 'black' : 'var(--color-zinc-600)',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Customer Leads
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -248,8 +294,8 @@ export function Dashboard() {
                 </button>
               </div>
             )}
-            {projects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
-            {projects.filter(proj => {
+            {projects.filter(p => p.status !== 'lead').length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
+            {projects.filter(p => p.status !== 'lead').filter(proj => {
               if (!searchQuery) return true;
               const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
               const pTasks = tasks.filter(t => t.project_id === proj.id);
@@ -292,6 +338,51 @@ export function Dashboard() {
                   onReplyClick={openReplyModal}
                 />
               </div>
+              );
+            })}
+          </>
+        )}
+        {view === 'leads' && currentUser?.role === 'owner' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+              <button 
+                onClick={() => setModalType('lead')}
+                style={{ background: 'var(--color-brand-accent)', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-900)', cursor: 'pointer' }}>
+                Create New Lead +
+              </button>
+            </div>
+            {projects.filter(p => p.status === 'lead').filter(proj => {
+              if (!searchQuery) return true;
+              return proj.title.toLowerCase().includes(searchQuery) || (proj.customer_company && proj.customer_company.toLowerCase().includes(searchQuery));
+            }).map(proj => {
+              const projTasks = tasks.filter(t => t.project_id === proj.id);
+              const projUpdates = updates.filter(update => projTasks.some(t => t.id === update.task_id));
+              
+              return (
+                <div key={proj.id} style={{ position: 'relative' }}>
+                  <button 
+                    onClick={() => convertLead(proj.id)}
+                    style={{ position: 'absolute', right: '32px', top: '16px', zIndex: 10, background: 'var(--color-zinc-900)', border: 'none', borderRadius: '4px', padding: '6px 12px', fontSize: '10px', fontWeight: 600, color: 'white', cursor: 'pointer' }}
+                  >
+                    Turn into Project
+                  </button>
+                  <TimelineCard 
+                    initials={proj.title.charAt(0).toUpperCase()} 
+                    title={`${proj.title} • ${proj.customer_company || 'Independent Contact'}`} 
+                    subtitle={`PIPELINE TRACKING | ${proj.customer_email || 'No email provided'}`} 
+                    color="var(--color-brand-accent)" 
+                    updates={projUpdates}
+                    action1Label="Add Timeline Note"
+                    onAction1={() => {
+                        setFormTaskId(projTasks[0]?.id || ''); 
+                        setModalType('lead-note');
+                    }}
+                    startDate={proj.created_at}
+                    users={users}
+                    currentUser={currentUser}
+                    onReplyClick={openReplyModal}
+                  />
+                </div>
               );
             })}
           </>
@@ -355,6 +446,23 @@ export function Dashboard() {
           <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>Your message will be appended to this log's active timeline thread.</div>
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
           <button type="submit" className="auth-button">Send Message</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={modalType === 'lead-note'} onClose={() => setModalType(null)} title="CRM Status Note">
+        <form onSubmit={submitLeadNote} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>This text will show up directly as an anchor note on the customer's pipeline timeline.</div>
+          <input type="text" placeholder="CRM Note (e.g. Scoped out the layers)" value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <button type="submit" className="auth-button">Save Point</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={modalType === 'lead'} onClose={() => setModalType(null)} title="Register Customer Lead">
+        <form onSubmit={submitLead} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input type="text" placeholder="Customer Name" value={formLeadName} onChange={e => setFormLeadName(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <input type="text" placeholder="Company Brand (Optional)" value={formLeadCompany} onChange={e => setFormLeadCompany(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <input type="email" placeholder="Contact Email" value={formLeadEmail} onChange={e => setFormLeadEmail(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <button type="submit" className="auth-button" style={{ background: 'var(--color-brand-accent)', color: 'black' }}>Initialize Pipeline Tracking</button>
         </form>
       </Modal>
 

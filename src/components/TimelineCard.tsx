@@ -19,6 +19,7 @@ interface TimelineCardProps {
   users?: { id: string; name: string }[];
   currentUser?: { id: string; name: string; role?: string } | null;
   onReplyClick?: (updateId: string) => void;
+  onEditDates?: () => void;
 }
 
 export function TimelineCard({
@@ -36,7 +37,8 @@ export function TimelineCard({
   endDate,
   users = [],
   currentUser,
-  onReplyClick
+  onReplyClick,
+  onEditDates
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -170,6 +172,11 @@ export function TimelineCard({
       </div>
 
       <div className="card-right">
+        {onEditDates && (
+          <button onClick={onEditDates} style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', color: 'var(--color-zinc-600)', fontSize: '10px', fontWeight: 600, cursor: 'pointer', padding: '4px 8px', width: '100%', marginBottom: '4px' }}>
+            Edit Dates
+          </button>
+        )}
         {action1Label && (
           <button className="pill-button" onClick={onAction1}>
             <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column' }}>

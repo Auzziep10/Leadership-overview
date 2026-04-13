@@ -343,14 +343,6 @@ export function Dashboard() {
               
               return (
                 <div key={proj.id} style={{ position: 'relative' }}>
-                  {!isStaff && (
-                    <button 
-                      onClick={() => openEditProjectModal(proj)}
-                      style={{ position: 'absolute', right: '32px', top: '16px', zIndex: 10, background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)', cursor: 'pointer' }}
-                    >
-                      Edit Dates
-                    </button>
-                  )}
                   <TimelineCard 
                     initials={proj.title.charAt(0).toUpperCase()} 
                   title={proj.title} 
@@ -361,7 +353,8 @@ export function Dashboard() {
                     action1Label: "Add Task",
                     onAction1: () => openTaskModal(proj.id),
                     action2Label: "View All Tasks",
-                    onAction2: () => openTasksList(`Project (${proj.title})`, projTasks)
+                    onAction2: () => openTasksList(`Project (${proj.title})`, projTasks),
+                    onEditDates: () => openEditProjectModal(proj)
                   } : {})}
                   startDate={proj.created_at}
                   endDate={proj.end_date}

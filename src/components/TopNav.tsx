@@ -27,6 +27,7 @@ export function TopNav() {
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false);
 
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'signature'>('profile');
 
   useEffect(() => {
     if (user && isSettingsOpen) {
@@ -108,6 +109,70 @@ export function TopNav() {
       setIsUpdatingDetails(false);
     }
   };
+
+  const copySignature = async () => {
+    if (!user) return;
+    try {
+      const html = generateSignatureHTML();
+      const blob = new Blob([html], { type: 'text/html' });
+      const clipboardItem = new window.ClipboardItem({ 'text/html': blob });
+      await navigator.clipboard.write([clipboardItem]);
+      alert('High-fidelity signature copied to clipboard globally! Open your Gmail or Outlook settings and hit paste to install.');
+    } catch(err) {
+      alert("Clipboard API failure. Ensure your browser is secure context.");
+    }
+  };
+
+  const generateSignatureHTML = () => {
+    if (!user) return '';
+    const bannerUrl = 'https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop';
+    const avatarUrl = user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80';
+    
+    return `
+<table cellpadding="0" cellspacing="0" border="0" width="400" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 400px; min-width: 400px; width: 400px; background-color: #ffffff;">
+  <tr>
+    <td style="height: auto;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td height="80" style="background-color: #18181b; background-image: url('${bannerUrl}'); background-size: cover; background-position: center; height: 80px; width: 100%;">
+          </td>
+        </tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
+          <td width="60" valign="top" style="width: 60px;">
+            <div style="margin-top: -30px;">
+              <img src="${avatarUrl}" width="60" height="60" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover;" alt="${user.name}">
+            </div>
+          </td>
+          <td width="308"></td>
+        </tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 12px;">
+        <tr>
+          <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
+          <td width="368" valign="top">
+            <div style="font-weight: 700; font-size: 16px; color: #18181b; margin: 0; padding: 0; letter-spacing: -0.02em;">${user.name}</div>
+            <div style="font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; margin: 4px 0 0 0; padding: 0;">${user.role || 'COMPANY STAFF'}</div>
+            <div style="font-size: 12px; color: #52525b; margin: 16px 0 0 0; padding: 0;">
+              <span style="font-weight: 700; color: #18181b;">E</span> &nbsp;<a href="mailto:${user.email}" style="color: #52525b; text-decoration: none;">${user.email}</a>
+            </div>
+            ${user.phone ? `<div style="font-size: 12px; color: #52525b; margin: 4px 0 0 0; padding: 0;">
+              <span style="font-weight: 700; color: #18181b;">P</span> &nbsp;<a href="tel:${user.phone}" style="color: #52525b; text-decoration: none;">${user.phone}</a>
+            </div>` : ''}
+            <div style="margin-top: 20px; border-top: 1px solid #e4e4e7; padding-top: 16px; padding-bottom: 24px;">
+              <div style="font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #18181b; margin: 0; padding: 0;">Leadership Overview Inc.</div>
+              <div style="font-size: 10px; color: #a1a1aa; margin: 4px 0 0 0;">CONFIDENTIAL INTERNAL DOMAIN</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+`.replace(/\n/g, '').replace(/\s+/g, ' ');
+  };
   
   return (
     <>
@@ -180,44 +245,80 @@ export function TopNav() {
             <>
               <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>
                 Upload a new profile picture. This icon will appear across all timelines and project boards.
-              </div>
-              <div style={{ padding: '24px', border: '2px dashed var(--color-zinc-200)', borderRadius: '8px', textAlign: 'center', position: 'relative' }}>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
-                  disabled={uploading}
-                />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Click or Drag a Photo Here</span>
-              </div>
-              
-              <hr style={{ border: 'none', borderTop: '1px solid var(--color-zinc-100)', margin: '8px 0' }} />
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '8px' }}>Personal Data</div>
-                <input type="text" placeholder="Full Name" value={personalName} onChange={e => setPersonalName(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
-                <input type="email" placeholder="Email Address" value={personalEmail} onChange={e => setPersonalEmail(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
-                <input type="tel" placeholder="Phone Number" value={personalPhone} onChange={e => setPersonalPhone(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
-                
-                <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '16px' }}>Account Security</div>
-                <input type="password" placeholder="New Password (leave blank to keep current)" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
-
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--color-zinc-200)', marginBottom: '24px' }}>
                 <button 
-                  onClick={handleSaveDetails}
-                  disabled={isUpdatingDetails}
-                  className="auth-button"
-                  style={{ width: '100%', marginTop: '8px', padding: '12px', borderRadius: '8px', opacity: isUpdatingDetails ? 0.6 : 1 }}
+                  onClick={() => setSettingsTab('profile')} 
+                  style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', borderBottom: settingsTab === 'profile' ? '2px solid var(--color-zinc-900)' : '2px solid transparent', fontWeight: 600, color: settingsTab === 'profile' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)', cursor: 'pointer', fontSize: '13px' }}
                 >
-                  {isUpdatingDetails ? 'Applying Changes...' : 'Save Local Details'}
+                  System Profile
+                </button>
+                <button 
+                  onClick={() => setSettingsTab('signature')} 
+                  style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', borderBottom: settingsTab === 'signature' ? '2px solid var(--color-zinc-900)' : '2px solid transparent', fontWeight: 600, color: settingsTab === 'signature' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  Email Signature
                 </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
-                 <button onClick={() => auth.signOut()} style={{ background: 'transparent', border: '1px solid var(--color-zinc-300)', color: 'var(--color-zinc-600)', padding: '6px 16px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
-                   Sign Out of Account
-                 </button>
-              </div>
+              {settingsTab === 'profile' ? (
+                <>
+                  <div style={{ padding: '24px', border: '2px dashed var(--color-zinc-200)', borderRadius: '8px', textAlign: 'center', position: 'relative' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                      disabled={uploading}
+                    />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Click or Drag a Photo Here</span>
+                  </div>
+                  
+                  <hr style={{ border: 'none', borderTop: '1px solid var(--color-zinc-100)', margin: '8px 0' }} />
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '8px' }}>Personal Data</div>
+                    <input type="text" placeholder="Full Name" value={personalName} onChange={e => setPersonalName(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                    <input type="email" placeholder="Email Address" value={personalEmail} onChange={e => setPersonalEmail(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                    <input type="tel" placeholder="Phone Number" value={personalPhone} onChange={e => setPersonalPhone(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+                    
+                    <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '16px' }}>Account Security</div>
+                    <input type="password" placeholder="New Password (leave blank to keep current)" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+
+                    <button 
+                      onClick={handleSaveDetails}
+                      disabled={isUpdatingDetails}
+                      className="auth-button"
+                      style={{ width: '100%', marginTop: '8px', padding: '12px', borderRadius: '8px', opacity: isUpdatingDetails ? 0.6 : 1 }}
+                    >
+                      {isUpdatingDetails ? 'Applying Changes...' : 'Save Local Details'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
+                     <button onClick={() => auth.signOut()} style={{ background: 'transparent', border: '1px solid var(--color-zinc-300)', color: 'var(--color-zinc-600)', padding: '6px 16px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                       Sign Out of Account
+                     </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', lineHeight: '1.5' }}>
+                    Your signature is programmatically minified and packaged using a 85/15 structural table grid. It avoids dynamic padding elements so mail engines won't stretch or break the layout boundaries.
+                  </div>
+                  
+                  <div style={{ background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', justifyContent: 'center' }}>
+                    <div dangerouslySetInnerHTML={{ __html: generateSignatureHTML() }} />
+                  </div>
+
+                  <button 
+                    onClick={copySignature}
+                    className="auth-button"
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px' }}
+                  >
+                    Copy to Clipboard Memory
+                  </button>
+                </div>
+              )}
             </>
           )}
 

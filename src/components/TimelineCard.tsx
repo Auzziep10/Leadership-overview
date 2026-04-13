@@ -7,6 +7,7 @@ interface TimelineCardProps {
   title: string;
   subtitle: string;
   initials: string;
+  avatarUrl?: string;
   color?: string;
   updates: TaskUpdate[];
   onAction1?: () => void;
@@ -24,6 +25,7 @@ export function TimelineCard({
   title,
   subtitle,
   initials,
+  avatarUrl,
   color = '#f43f5e',
   updates,
   onAction1,
@@ -53,7 +55,7 @@ export function TimelineCard({
             width: '56px',
             height: '56px',
             borderRadius: '12px',
-            background: `linear-gradient(135deg, ${color}, #fca5a5)`,
+            background: avatarUrl ? 'transparent' : `linear-gradient(135deg, ${color}, #fca5a5)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -61,9 +63,14 @@ export function TimelineCard({
             fontSize: '32px',
             fontWeight: 800,
             fontFamily: 'var(--font-serif)',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
           }}>
-            {initials}
+            {avatarUrl ? (
+               <img src={avatarUrl} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+               initials
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div className="card-title">

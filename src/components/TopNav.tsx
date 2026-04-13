@@ -63,7 +63,6 @@ export function TopNav() {
             {user?.role !== 'staff' && (
               <span style={{ cursor: 'pointer', borderBottom: location.pathname === '/team' ? '2px solid var(--color-zinc-900)' : 'none', color: location.pathname === '/team' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)' }} onClick={() => navigate('/team')}>TEAM / ROLES</span>
             )}
-            <span style={{ cursor: 'pointer', color: 'var(--color-zinc-500)' }} onClick={() => setIsSettingsOpen(true)}>SETTINGS</span>
             <span style={{ cursor: 'pointer', color: 'var(--color-zinc-500)' }} onClick={() => auth.signOut()}>LOG OUT</span>
           </div>
           {!isStaff && (
@@ -71,6 +70,14 @@ export function TopNav() {
           )}
         </div>
       </header>
+
+      <div 
+        style={{ position: 'fixed', bottom: '24px', left: '24px', zIndex: 100, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid var(--color-zinc-200)' }}
+        onClick={() => setIsSettingsOpen(true)}
+      >
+         <span style={{ fontSize: '14px' }}>⚙️</span>
+         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Settings</span>
+      </div>
 
       <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Account Settings">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

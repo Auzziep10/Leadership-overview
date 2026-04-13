@@ -13,16 +13,12 @@ export function TopNav() {
   
   return (
     <>
-      <div className="top-banner">
-        <span>&#9432;</span>
-        ADMIN VIEW: YOU ARE CURRENTLY VIEWING THE PORTAL AS {user?.role?.toUpperCase() || 'STAFF'} {user?.name?.toUpperCase()}
-      </div>
       <header className="header-nav">
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           <img src="/C-Logo@300x.png" alt="Logo" style={{ height: '32px', objectFit: 'contain' }} />
           <div className="search-bar">
-            <Search size={14} color="var(--color-zinc-400)" />
-            <input type="text" placeholder="Search tasks, staff, projects..." />
+             <Search size={14} color="var(--color-zinc-400)" />
+             <input type="text" placeholder="Search tasks, staff, projects..." onChange={(e) => window.dispatchEvent(new CustomEvent('global-search', { detail: e.target.value.toLowerCase() }))} />
           </div>
         </div>
         

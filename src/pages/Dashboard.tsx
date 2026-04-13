@@ -13,6 +13,7 @@ export function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
   const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | null>(null);
@@ -70,8 +71,15 @@ export function Dashboard() {
     
     // Listen for TopNav calls
     const handleOpenProject = () => setModalType('project');
+    const handleSearch = (e: any) => setSearchQuery(e.detail);
+    
     window.addEventListener('open-create-project', handleOpenProject);
-    return () => window.removeEventListener('open-create-project', handleOpenProject);
+    window.addEventListener('global-search', handleSearch);
+    
+    return () => {
+      window.removeEventListener('open-create-project', handleOpenProject);
+      window.removeEventListener('global-search', handleSearch);
+    };
   }, [currentUser]);
 
   // Submit Handlers
@@ -189,7 +197,16 @@ export function Dashboard() {
         {view === 'team' && (
           <>
             {users.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No staff found. Create an account first.</div>}
-            {users.map(user => {
+            {users.filter(user => {
+              if (!searchQuery) return true;
+              const matchName = user.name.toLowerCase().includes(searchQuery);
+              const matchRole = user.role?.toLowerCase().includes(searchQuery);
+              const uTasks = tasks.filter(t => t.assignees?.includes(user.id));
+              const mTasks = uTasks.some(t => t.title.toLowerCase().includes(searchQuery));
+              const uProjIds = new Set(uTasks.map(t => t.project_id));
+              const mProjs = projects.some(p => uProjIds.has(p.id) && p.title.toLowerCase().includes(searchQuery));
+              return matchName || matchRole || mTasks || mProjs;
+            }).map(user => {
               // Get tasks where user is assigned
               const userTasks = tasks.filter(t => t.assignees?.includes(user.id));
               // Get unique projects from those tasks
@@ -232,7 +249,15 @@ export function Dashboard() {
               </div>
             )}
             {projects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
-            {projects.map(proj => {
+            {projects.filter(proj => {
+              if (!searchQuery) return true;
+              const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
+              const pTasks = tasks.filter(t => t.project_id === proj.id);
+              const matchTasks = pTasks.some(t => t.title.toLowerCase().includes(searchQuery));
+              const assignedUserIds = new Set(pTasks.flatMap(t => t.assignees || []));
+              const matchStaff = users.some(u => assignedUserIds.has(u.id) && (u.name.toLowerCase().includes(searchQuery) || u.role?.toLowerCase().includes(searchQuery)));
+              return matchProj || matchTasks || matchStaff;
+            }).map(proj => {
               // Get tasks for this project
               const projTasks = tasks.filter(t => t.project_id === proj.id);
               // Get all updates for this project's tasks

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import type { TaskUpdate } from '../types';
 
@@ -81,10 +81,10 @@ export function TimelineCard({
         </div>
 
       <div className="timeline-track">
-        <div style={{ position: 'absolute', left: '24px', top: '-16px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-400)' }}>
+        <div style={{ position: 'absolute', left: '24px', top: '-24px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-400)' }}>
           {format(new Date(tStart), 'MMM d, yyyy')}
         </div>
-        <div style={{ position: 'absolute', right: '24px', top: '-16px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>
+        <div style={{ position: 'absolute', right: '24px', top: '-24px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>
           {format(new Date(tEnd), 'MMM d, yyyy')}
         </div>
 
@@ -170,15 +170,23 @@ export function TimelineCard({
       </div>
 
       <div className="card-right">
-        <button className="pill-button" onClick={onAction1}>
-          <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700 }}>{action1Label}</span>
-          </div>
-        </button>
-        <button className="pill-button" onClick={onAction2}>
-          <span style={{ fontSize: '11px', fontWeight: 700 }}>{action2Label}</span>
-          <Download size={14} color="var(--color-zinc-500)" />
-        </button>
+        {action1Label && (
+          <button className="pill-button" onClick={onAction1}>
+            <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700 }}>{action1Label}</span>
+            </div>
+          </button>
+        )}
+        {action2Label && (
+          <button className="pill-button" onClick={action2Label.includes('Tasks') ? () => setIsExpanded(!isExpanded) : onAction2}>
+            <span style={{ fontSize: '11px', fontWeight: 700 }}>{action2Label}</span>
+            {action2Label.includes('Tasks') ? (
+               <ChevronDown size={14} color="var(--color-zinc-500)" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />
+            ) : (
+               <Download size={14} color="var(--color-zinc-500)" />
+            )}
+          </button>
+        )}
       </div>
       </div>
       <div 

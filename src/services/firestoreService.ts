@@ -155,11 +155,12 @@ export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> =>
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 };
 
-export const addTaskUpdate = async (taskId: string, authorId: string, note: string) => {
+export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean) => {
   const docRef = await addDoc(collection(db, 'task_updates'), {
     task_id: taskId,
     author_id: authorId,
     note,
+    is_action_item: isActionItem || false,
     created_at: new Date().toISOString()
   });
   return docRef.id;

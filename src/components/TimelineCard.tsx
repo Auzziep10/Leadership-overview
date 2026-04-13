@@ -21,6 +21,7 @@ interface TimelineCardProps {
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
   onEditTask?: (task: any) => void;
+  onActionItem?: (task: any) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   tasks?: { id: string; title: string }[];
   assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; }[];
@@ -44,6 +45,7 @@ export function TimelineCard({
   onReplyClick,
   onEditDates,
   onEditTask,
+  onActionItem,
   onReorderTasks,
   tasks = [],
   assignedTasks = []
@@ -268,6 +270,14 @@ export function TimelineCard({
                       <span style={{ color: 'var(--color-zinc-400)', fontSize: '14px', marginLeft: '6px', display: 'inline-block', transform: expandedTasks[task.id] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>›</span>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {onActionItem && (currentUser?.role === 'owner' || currentUser?.role === 'admin') && (
+                        <div 
+                          onClick={(e) => { e.stopPropagation(); onActionItem(task); }} 
+                          style={{ fontSize: '10px', fontWeight: 700, color: 'white', background: 'var(--color-zinc-900)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}
+                        >
+                          + Action Item
+                        </div>
+                      )}
                       {onEditTask && (
                         <div 
                           onClick={(e) => { e.stopPropagation(); onEditTask(task); }} 
@@ -302,8 +312,10 @@ export function TimelineCard({
                               {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                              <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)' }}>{n.note}</div>
-                              <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Logged by {authorName}</div>
+                              <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 600 : 400 }}>{n.note}</div>
+                              <div style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 500, letterSpacing: n.is_action_item ? '0.05em' : 'normal' }}>
+                                {n.is_action_item ? `🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
+                              </div>
                               
                               {messages.length > 0 && (
                                 <div style={{ marginTop: '6px', padding: '8px 12px', background: 'white', borderRadius: '6px', borderLeft: `2px solid ${color}`, fontSize: '12px', color: 'var(--color-zinc-700)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>

@@ -16,7 +16,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | null>(null);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [activeUserId, setActiveUserId] = useState<string>('');
   const [tasksListSubject, setTasksListSubject] = useState<string>('');
@@ -169,6 +169,16 @@ export function Dashboard() {
     loadDashboardData();
   };
 
+  const submitActionItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentUser) {
+      await addTaskUpdate(activeTaskId, currentUser.id, formNote, true);
+      setModalType(null);
+      setFormNote('');
+      loadDashboardData();
+    }
+  };
+
   const submitReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser) {
@@ -226,6 +236,12 @@ export function Dashboard() {
     setFormTaskStatus(task.status || 'todo');
     setFormTaskProjectId(task.project_id || '');
     setModalType('edit_task');
+  };
+
+  const openActionItemModal = (task: Task) => {
+    setActiveTaskId(task.id);
+    setFormNote('');
+    setModalType('action-item');
   };
 
   const openUpdateModal = (userId: string) => {
@@ -454,6 +470,7 @@ export function Dashboard() {
                     currentUser={currentUser}
                     onReplyClick={openReplyModal}
                     onEditTask={openEditTaskModal}
+                    onActionItem={openActionItemModal}
                     onReorderTasks={handleReorderTasks}
                   />
                 </div>
@@ -595,6 +612,13 @@ export function Dashboard() {
           </div>
           
           <button type="submit" className="auth-button">Save Changes to Task</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={modalType === 'action-item'} onClose={() => setModalType(null)} title="Create Action Item">
+        <form onSubmit={submitActionItem} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <textarea placeholder="Describe the required action..." value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
+          <button type="submit" className="auth-button">Log Action Item</button>
         </form>
       </Modal>
 

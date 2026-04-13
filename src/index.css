@@ -197,6 +197,7 @@ body {
   height: 8px;
   background: var(--color-zinc-300);
   transform: translateY(-50%);
+  border-radius: 4px;
   z-index: 1;
 }
 
@@ -207,6 +208,7 @@ body {
   height: 8px;
   background: var(--color-zinc-800);
   transform: translateY(-50%);
+  border-radius: 4px;
   z-index: 2;
   transition: width 0.3s ease;
 }

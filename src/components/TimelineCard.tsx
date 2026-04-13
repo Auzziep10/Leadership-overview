@@ -341,7 +341,7 @@ export function TimelineCard({
                                       </button>
                                       {n.is_action_item && onLogUpdateClick && (
                                         <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '10px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '4px', cursor: 'pointer', padding: '3px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                          + Add Separate Timeline Note
+                                          + Add Log to Action Item
                                         </button>
                                       )}
                                     </div>
@@ -355,7 +355,7 @@ export function TimelineCard({
                                   </button>
                                   {n.is_action_item && onLogUpdateClick && (
                                     <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', transition: 'all 0.2s' }}>
-                                      + Add Separate Timeline Note
+                                      + Add Log to Action Item
                                     </button>
                                   )}
                                 </div>

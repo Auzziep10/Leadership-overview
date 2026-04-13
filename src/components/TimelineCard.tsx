@@ -20,6 +20,7 @@ interface TimelineCardProps {
   currentUser?: { id: string; name: string; role?: string } | null;
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
+  tasks?: { id: string; title: string }[];
 }
 
 export function TimelineCard({
@@ -38,7 +39,8 @@ export function TimelineCard({
   users = [],
   currentUser,
   onReplyClick,
-  onEditDates
+  onEditDates,
+  tasks = []
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -124,7 +126,7 @@ export function TimelineCard({
                 {/* Tooltip on hover */}
                 <div className="timeline-tooltip">
                   <div style={{ fontWeight: 600, color: 'var(--color-zinc-900)', marginBottom: '4px' }}>
-                     Update {i+1}
+                     {tasks?.find(t => t.id === node.task_id)?.title || `Task Update ${i+1}`}
                   </div>
                   <div style={{ color: 'var(--color-zinc-500)', lineHeight: '1.4' }}>
                     {node.note}

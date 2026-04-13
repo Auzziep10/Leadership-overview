@@ -226,9 +226,9 @@ export function Dashboard() {
             style={{ 
               padding: '8px 24px', 
               borderRadius: '99px',
-              border: '1px solid var(--color-brand-accent)',
-              background: view === 'leads' ? 'var(--color-brand-accent)' : 'white',
-              color: view === 'leads' ? 'black' : 'var(--color-zinc-600)',
+              border: '1px solid var(--color-zinc-200)',
+              background: view === 'leads' ? 'var(--color-zinc-900)' : 'white',
+              color: view === 'leads' ? 'white' : 'var(--color-zinc-600)',
               fontWeight: 600,
               fontSize: '12px',
               cursor: 'pointer'
@@ -268,7 +268,7 @@ export function Dashboard() {
                   avatarUrl={user.avatar_url}
                   title={user.name} 
                   subtitle={`${userTasks.length} ACTIVE TASKS | ${userProjectIds.size} PROJECTS`} 
-                  color="#f43f5e" 
+                  color="#18181b" 
                   updates={userUpdates}
                   action1Label="Log Update"
                   onAction1={() => openUpdateModal(user.id)}
@@ -324,7 +324,7 @@ export function Dashboard() {
                     initials={proj.title.charAt(0).toUpperCase()} 
                   title={proj.title} 
                   subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
-                  color="#10b981" 
+                  color="#18181b" 
                   updates={projUpdates}
                   {...(!isStaff ? {
                     action1Label: "Add Task",
@@ -348,7 +348,7 @@ export function Dashboard() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
               <button 
                 onClick={() => setModalType('lead')}
-                style={{ background: 'var(--color-brand-accent)', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-900)', cursor: 'pointer' }}>
+                style={{ background: 'var(--color-zinc-900)', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>
                 Create New Lead +
               </button>
             </div>
@@ -371,7 +371,7 @@ export function Dashboard() {
                     initials={proj.title.charAt(0).toUpperCase()} 
                     title={`${proj.title} • ${proj.customer_company || 'Independent Contact'}`} 
                     subtitle={`PIPELINE TRACKING | ${proj.customer_email || 'No email provided'}`} 
-                    color="var(--color-brand-accent)" 
+                    color="#18181b" 
                     updates={projUpdates}
                     action1Label="Add Timeline Note"
                     onAction1={() => {
@@ -463,7 +463,7 @@ export function Dashboard() {
           <input type="text" placeholder="Customer Name" value={formLeadName} onChange={e => setFormLeadName(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           <input type="text" placeholder="Company Brand (Optional)" value={formLeadCompany} onChange={e => setFormLeadCompany(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           <input type="email" placeholder="Contact Email" value={formLeadEmail} onChange={e => setFormLeadEmail(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
-          <button type="submit" className="auth-button" style={{ background: 'var(--color-brand-accent)', color: 'black' }}>Initialize Pipeline Tracking</button>
+          <button type="submit" className="auth-button">Initialize Pipeline Tracking</button>
         </form>
       </Modal>
 

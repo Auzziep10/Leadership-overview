@@ -295,6 +295,7 @@ export function TimelineCard({
                         );
                       })}
                     </div>
+                    )
                   )}
                 </div>
               );

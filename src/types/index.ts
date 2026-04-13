@@ -33,6 +33,7 @@ export interface Task {
   project_id: string;
   title: string;
   details?: string;
+  order_index?: number;
   assignees: string[]; // User IDs
   due_date?: string; // Newly added
   created_at: string;

@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc, writeBatch } from 'firebase/firestore';
 import { db, firebaseConfig } from './firebaseConfig';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
@@ -139,6 +139,14 @@ export const createTask = async (projectId: string, title: string, assignees: st
 
 export const updateTask = async (taskId: string, updates: Partial<any>) => {
   await updateDoc(doc(db, 'tasks', taskId), updates);
+};
+
+export const updateTaskOrders = async (reorderedTasks: { id: string, order_index: number }[]) => {
+  const batch = writeBatch(db);
+  for (const task of reorderedTasks) {
+    batch.update(doc(db, 'tasks', task.id), { order_index: task.order_index });
+  }
+  await batch.commit();
 };
 
 export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> => {

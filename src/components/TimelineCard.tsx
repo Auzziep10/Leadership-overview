@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import type { TaskUpdate } from '../types';
@@ -21,8 +21,9 @@ interface TimelineCardProps {
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
   onEditTask?: (task: any) => void;
+  onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   tasks?: { id: string; title: string }[];
-  assignedTasks?: { id: string; title: string; status: string; details?: string; }[];
+  assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; }[];
 }
 
 export function TimelineCard({
@@ -43,12 +44,19 @@ export function TimelineCard({
   onReplyClick,
   onEditDates,
   onEditTask,
+  onReorderTasks,
   tasks = [],
   assignedTasks = []
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [localTasks, setLocalTasks] = useState(assignedTasks);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setLocalTasks([...assignedTasks].sort((a,b) => (a.order_index || 0) - (b.order_index || 0)));
+  }, [assignedTasks]);
 
   const toggleTask = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
@@ -223,11 +231,33 @@ export function TimelineCard({
         }}
       >
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {assignedTasks.length > 0 ? (
-            assignedTasks.map(task => {
+          {localTasks.length > 0 ? (
+            localTasks.map((task, idx) => {
               const taskNodes = nodes.filter(n => n.task_id === task.id);
               return (
-                <div key={task.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div 
+                  key={task.id} 
+                  draggable
+                  onDragStart={() => { setDraggedIndex(idx); }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (draggedIndex === null || draggedIndex === idx) return;
+                    const newTasks = [...localTasks];
+                    const draggedItem = newTasks[draggedIndex];
+                    newTasks.splice(draggedIndex, 1);
+                    newTasks.splice(idx, 0, draggedItem);
+                    setDraggedIndex(idx);
+                    setLocalTasks(newTasks);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDraggedIndex(null);
+                    if (onReorderTasks) {
+                      onReorderTasks(localTasks.map((t, index) => ({ id: t.id, order_index: index })));
+                    }
+                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: draggedIndex === idx ? 0.5 : 1 }}
+                >
                   <div 
                     onClick={() => toggleTask(task.id)}
                     title={task.details || 'Click to view log iterations'}

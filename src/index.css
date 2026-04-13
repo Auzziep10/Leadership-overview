@@ -311,8 +311,18 @@ body {
   background: var(--color-zinc-50);
 }
 
+.signature-layout-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  align-items: flex-start;
+}
+
 /* Mobile Responsiveness Rules */
 @media (max-width: 768px) {
+  .signature-layout-grid {
+    flex-direction: column;
+  }
   .header-nav {
     padding: 0 16px;
     height: auto;

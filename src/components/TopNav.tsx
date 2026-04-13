@@ -332,7 +332,7 @@ export function TopNav() {
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start', background: 'var(--color-zinc-50)', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-zinc-100)' }}>
+                <div className="signature-layout-grid" style={{ background: 'var(--color-zinc-50)', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-zinc-100)' }}>
                   
                   {/* Left Column Controls */}
                   <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', gap: '24px' }}>

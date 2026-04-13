@@ -21,6 +21,7 @@ interface TimelineCardProps {
   onReplyClick?: (updateId: string) => void;
   onEditDates?: () => void;
   tasks?: { id: string; title: string }[];
+  assignedTasks?: { id: string; title: string; status: string }[];
 }
 
 export function TimelineCard({
@@ -40,7 +41,8 @@ export function TimelineCard({
   currentUser,
   onReplyClick,
   onEditDates,
-  tasks = []
+  tasks = [],
+  assignedTasks = []
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -213,63 +215,135 @@ export function TimelineCard({
           visibility: isExpanded ? 'visible' : 'hidden'
         }}
       >
-        <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Timeline Logs</div>
-          {nodes.length === 0 ? (
-            <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>No logged updates yet.</div>
-          ) : (
-            nodes.map(n => {
-              const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
-              
-              const messages = [...(n.thread || [])];
-              if (!n.thread && n.admin_reply) {
-                messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
-                if (n.user_response) {
-                  messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
-                }
-              }
-              const canReply = currentUser?.role !== 'staff' || currentUser?.id === n.author_id;
-
+        <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {assignedTasks.length > 0 ? (
+            assignedTasks.map(task => {
+              const taskNodes = nodes.filter(n => n.task_id === task.id);
               return (
-                <div key={n.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '130px', flexShrink: 0, fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
-                    {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                <div key={task.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '8px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{task.title}</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)' }}>{n.note}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Logged by {authorName}</div>
-                    
-                    {messages.length > 0 && (
-                      <div style={{ marginTop: '6px', padding: '8px 12px', background: 'white', borderRadius: '6px', borderLeft: `2px solid ${color}`, fontSize: '12px', color: 'var(--color-zinc-700)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                        {messages.map((msg, idx) => {
-                          const mAuthorObj = users.find(u => u.id === msg.author_id);
-                          const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
-                          return (
-                            <div key={msg.id} style={{ marginTop: idx > 0 ? '8px' : '0', paddingTop: idx > 0 ? '8px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-100)' : 'none', fontSize: '11px', color: 'var(--color-zinc-600)' }}>
-                              <strong style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', marginBottom: '2px', color: msg.author_id === n.author_id ? 'var(--color-zinc-400)' : color, letterSpacing: '0.05em' }}>
-                                {mAuthorName} Replied:
-                              </strong>
-                              {msg.message}
-                            </div>
-                          );
-                        })}
+                  {taskNodes.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-400)', fontStyle: 'italic', paddingLeft: '8px' }}>No timeline updates logged.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '8px', borderLeft: '2px solid var(--color-zinc-100)' }}>
+                      {taskNodes.map(n => {
+                        const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
+                        const messages = [...(n.thread || [])];
+                        if (!n.thread && n.admin_reply) {
+                          messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
+                          if (n.user_response) {
+                            messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
+                          }
+                        }
+                        const canReply = currentUser?.role !== 'staff' || currentUser?.id === n.author_id;
 
-                        {onReplyClick && canReply && (
-                          <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '10px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
-                            + Add Reply
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {onReplyClick && canReply && messages.length === 0 && (
-                      <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '6px', fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', transition: 'all 0.2s' }}>
-                        + Add Thread Message
-                      </button>
-                    )}
-                  </div>
+                        return (
+                          <div key={n.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingLeft: '12px' }}>
+                            <div style={{ width: '130px', flexShrink: 0, fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
+                              {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                              <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)' }}>{n.note}</div>
+                              <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Logged by {authorName}</div>
+                              
+                              {messages.length > 0 && (
+                                <div style={{ marginTop: '6px', padding: '8px 12px', background: 'white', borderRadius: '6px', borderLeft: `2px solid ${color}`, fontSize: '12px', color: 'var(--color-zinc-700)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                  {messages.map((msg, idx) => {
+                                    const mAuthorObj = users.find(u => u.id === msg.author_id);
+                                    const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
+                                    return (
+                                      <div key={msg.id} style={{ marginTop: idx > 0 ? '8px' : '0', paddingTop: idx > 0 ? '8px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-100)' : 'none', fontSize: '11px', color: 'var(--color-zinc-600)' }}>
+                                        <strong style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', marginBottom: '2px', color: msg.author_id === n.author_id ? 'var(--color-zinc-400)' : color, letterSpacing: '0.05em' }}>
+                                          {mAuthorName} Replied:
+                                        </strong>
+                                        {msg.message}
+                                      </div>
+                                    );
+                                  })}
+
+                                  {onReplyClick && canReply && (
+                                    <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '10px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                      + Add Reply
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              {onReplyClick && canReply && messages.length === 0 && (
+                                <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '6px', fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', transition: 'all 0.2s' }}>
+                                  + Add Thread Message
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })
+          ) : (
+            <>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Timeline Logs</div>
+              {nodes.length === 0 ? (
+                <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>No logged updates yet.</div>
+              ) : (
+                nodes.map(n => {
+                  const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
+                  const messages = [...(n.thread || [])];
+                  if (!n.thread && n.admin_reply) {
+                    messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
+                    if (n.user_response) {
+                      messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
+                    }
+                  }
+                  const canReply = currentUser?.role !== 'staff' || currentUser?.id === n.author_id;
+
+                  return (
+                    <div key={n.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '130px', flexShrink: 0, fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
+                        {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                        <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)' }}>{n.note}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Logged by {authorName}</div>
+                        
+                        {messages.length > 0 && (
+                          <div style={{ marginTop: '6px', padding: '8px 12px', background: 'white', borderRadius: '6px', borderLeft: `2px solid ${color}`, fontSize: '12px', color: 'var(--color-zinc-700)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            {messages.map((msg, idx) => {
+                              const mAuthorObj = users.find(u => u.id === msg.author_id);
+                              const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
+                              return (
+                                <div key={msg.id} style={{ marginTop: idx > 0 ? '8px' : '0', paddingTop: idx > 0 ? '8px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-100)' : 'none', fontSize: '11px', color: 'var(--color-zinc-600)' }}>
+                                  <strong style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', marginBottom: '2px', color: msg.author_id === n.author_id ? 'var(--color-zinc-400)' : color, letterSpacing: '0.05em' }}>
+                                    {mAuthorName} Replied:
+                                  </strong>
+                                  {msg.message}
+                                </div>
+                              );
+                            })}
+
+                            {onReplyClick && canReply && (
+                              <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '10px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                + Add Reply
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {onReplyClick && canReply && messages.length === 0 && (
+                          <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '6px', fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', transition: 'all 0.2s' }}>
+                            + Add Thread Message
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </>
           )}
         </div>
       </div>

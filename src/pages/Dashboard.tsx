@@ -315,6 +315,7 @@ export function Dashboard() {
                   endDate={shiftEnd.toISOString()}
                   users={users}
                   tasks={tasks}
+                  assignedTasks={userTasks}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
                 />
@@ -368,6 +369,7 @@ export function Dashboard() {
                   endDate={proj.end_date}
                   users={users}
                   tasks={tasks}
+                  assignedTasks={projTasks}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
                 />
@@ -414,6 +416,7 @@ export function Dashboard() {
                     startDate={proj.created_at}
                     users={users}
                     tasks={tasks}
+                    assignedTasks={subProjTasks}
                     currentUser={currentUser}
                     onReplyClick={openReplyModal}
                   />

@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
+import { Modal } from '../components/Modal';
 import type { User, Role } from '../types';
-import { fetchRoles, fetchUsers, createRole, updateUserRoleAndHierarchy } from '../services/firestoreService';
+import { fetchRoles, fetchUsers, createRole, updateUserRoleAndHierarchy, createTeamAccount } from '../services/firestoreService';
 
 export function TeamHierarchy() {
   const [view, setView] = useState<'hierarchy' | 'roles'>('hierarchy');
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [regEmail, setRegEmail] = useState('');
+  const [regPass, setRegPass] = useState('');
+  const [regName, setRegName] = useState('');
+  const [regWait, setRegWait] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -44,6 +51,22 @@ export function TeamHierarchy() {
 
     await updateUserRoleAndHierarchy(user.id, roleId, reportsTo);
     loadData();
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegWait(true);
+    try {
+      await createTeamAccount(regEmail, regPass, regName);
+      setIsRegistering(false);
+      setRegEmail('');
+      setRegPass('');
+      setRegName('');
+      loadData();
+    } catch(err: any) {
+      alert("Failed to register account: " + err.message);
+    }
+    setRegWait(false);
   };
 
   const renderHierarchyNode = (user: User, depth: number = 0) => {
@@ -130,6 +153,12 @@ export function TeamHierarchy() {
         </button>
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+         <button onClick={() => setIsRegistering(true)} style={{ background: 'var(--color-zinc-900)', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>
+           Register New Account +
+         </button>
+      </div>
+
       {view === 'hierarchy' ? (
         <div style={{ padding: '24px', background: 'white', borderRadius: '40px', border: '1px solid var(--color-zinc-200)' }}>
            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', marginBottom: '32px' }}>Org Chart</h2>
@@ -163,6 +192,18 @@ export function TeamHierarchy() {
            </div>
         </div>
       )}
+
+      <Modal isOpen={isRegistering} onClose={() => setIsRegistering(false)} title="Register Team Account">
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Create an isolated staff account. Their role will default to base staff until explicitly promoted.</div>
+          <input type="text" placeholder="Full Name" value={regName} onChange={e => setRegName(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <input type="email" placeholder="Staff Email Address" value={regEmail} onChange={e => setRegEmail(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <input type="password" placeholder="Temporary Password (min 6 chars)" value={regPass} onChange={e => setRegPass(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <button type="submit" disabled={regWait} className="auth-button" style={{ opacity: regWait ? 0.7 : 1 }}>
+            {regWait ? 'Registering...' : 'Provision Account'}
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 }

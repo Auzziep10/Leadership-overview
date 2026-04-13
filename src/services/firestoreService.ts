@@ -1,5 +1,7 @@
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion } from 'firebase/firestore';
-import { db } from './firebaseConfig';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc } from 'firebase/firestore';
+import { db, firebaseConfig } from './firebaseConfig';
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import type { User, Role, Project, Task, TaskUpdate } from '../types';
 
 // --- ROLES ---
@@ -14,6 +16,23 @@ export const createRole = async (name: string, level: number) => {
 };
 
 // --- USERS ---
+export const createTeamAccount = async (email: string, pass: string, name: string) => {
+  const secondaryApp = initializeApp(firebaseConfig, `AccountCreator_${Date.now()}`);
+  const secondaryAuth = getAuth(secondaryApp);
+  
+  const res = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+  
+  await setDoc(doc(db, 'users', res.user.uid), {
+    name,
+    email,
+    role: 'staff',
+    initials: name.charAt(0).toUpperCase(),
+    created_at: new Date().toISOString()
+  });
+  
+  await secondaryAuth.signOut();
+};
+
 export const fetchUsers = async (): Promise<User[]> => {
   const snap = await getDocs(collection(db, 'users'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as User));

@@ -103,6 +103,12 @@ export function TeamHierarchy() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <div className="card-title" style={{ fontSize: '16px' }}>{user.name}</div>
               <div className="card-subtitle">{userRole ? userRole.name : user.role || 'No Role'} • SYSTEM TIER: {(user.role || 'staff').toUpperCase()}</div>
+              
+              <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', marginTop: '4px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>✉️ {user.email || 'No Email Record'}</span>
+                {user.phone && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>📞 {user.phone}</span>}
+              </div>
+
               <div style={{ fontSize: '9px', color: 'var(--color-zinc-400)', marginTop: '4px' }}>ID: {user.id}</div>
             </div>
           </div>

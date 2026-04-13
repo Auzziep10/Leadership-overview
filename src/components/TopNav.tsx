@@ -335,7 +335,7 @@ export function TopNav() {
                 <div className="signature-layout-grid" style={{ background: 'var(--color-zinc-50)', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-zinc-100)' }}>
                   
                   {/* Left Column Controls */}
-                  <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={{ flex: '1 1 340px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     
                     {/* PC Card: Personal Details */}
                     <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -452,7 +452,7 @@ export function TopNav() {
                   </div>
 
                   {/* Right Column Preview */}
-                  <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '24px' }}>
+                  <div style={{ flex: '1 1 400px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Live Preview</div>

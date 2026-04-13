@@ -25,6 +25,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
       <div style={{ 
         background: 'white', 
         borderRadius: '24px', 
+        boxSizing: 'border-box',
         width: '100%', 
         maxWidth: maxWidth || '500px', 
         padding: '32px', 

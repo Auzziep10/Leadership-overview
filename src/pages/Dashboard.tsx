@@ -37,7 +37,7 @@ export function Dashboard() {
   const [formReply, setFormReply] = useState('');
   const [formTaskStatus, setFormTaskStatus] = useState('');
   const [formTaskProjectId, setFormTaskProjectId] = useState('');
-  const [formActionItem, setFormActionItem] = useState('');
+  const [formActionItems, setFormActionItems] = useState<string[]>([]);
   
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
@@ -142,22 +142,26 @@ export function Dashboard() {
   const submitEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus, project_id: formTaskProjectId });
-    if (formActionItem && currentUser) {
-      await addTaskUpdate(activeTaskId, currentUser.id, formActionItem, true);
+    if (currentUser) {
+      for (const item of formActionItems.filter(i => i.trim() !== '')) {
+        await addTaskUpdate(activeTaskId, currentUser.id, item, true);
+      }
     }
     setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus(''); setFormTaskProjectId(''); setFormActionItem('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormTaskStatus(''); setFormTaskProjectId(''); setFormActionItems([]);
     loadDashboardData();
   };
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
     const newTaskId = await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
-    if (formActionItem && currentUser) {
-      await addTaskUpdate(newTaskId, currentUser.id, formActionItem, true);
+    if (currentUser) {
+      for (const item of formActionItems.filter(i => i.trim() !== '')) {
+        await addTaskUpdate(newTaskId, currentUser.id, item, true);
+      }
     }
     setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormActionItem('');
+    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormActionItems([]);
     loadDashboardData();
   };
 
@@ -223,7 +227,7 @@ export function Dashboard() {
 
   const openTaskModal = (projectId: string) => {
     setActiveProjectId(projectId);
-    setFormActionItem('');
+    setFormActionItems([]);
     setModalType('task');
   };
 
@@ -243,7 +247,7 @@ export function Dashboard() {
     setFormDueDate(task.due_date || '');
     setFormTaskStatus(task.status || 'todo');
     setFormTaskProjectId(task.project_id || '');
-    setFormActionItem('');
+    setFormActionItems([]);
     setModalType('edit_task');
   };
 
@@ -521,9 +525,17 @@ export function Dashboard() {
           <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           
           {(currentUser?.role === 'owner' || currentUser?.role === 'admin') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Add Initial Action Item / Directive (Logs to Timeline)</label>
-              <textarea placeholder="Write a specialized action item required by the participant..." value={formActionItem} onChange={e => setFormActionItem(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Action Items / Directives (Logs to Timeline)</label>
+              {formActionItems.map((item, index) => (
+                <div key={index} style={{ position: 'relative' }}>
+                  <textarea placeholder="Write a specialized action item required by the participant..." value={item} onChange={e => { const newItems = [...formActionItems]; newItems[index] = e.target.value; setFormActionItems(newItems); }} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '60px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+                  <button type="button" onClick={() => setFormActionItems(formActionItems.filter((_, i) => i !== index))} style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--color-zinc-200)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-600)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>X</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setFormActionItems([...formActionItems, ''])} style={{ alignSelf: 'flex-start', background: 'transparent', border: '1px solid var(--color-zinc-200)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-600)', cursor: 'pointer' }}>
+                + Add Action Item
+              </button>
             </div>
           )}
 
@@ -573,9 +585,17 @@ export function Dashboard() {
           <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           
           {(currentUser?.role === 'owner' || currentUser?.role === 'admin') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Add Additional Action Item / Directive (Logs to Timeline)</label>
-              <textarea placeholder="Write a specialized action item required by the participant..." value={formActionItem} onChange={e => setFormActionItem(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-red-600)', marginLeft: '4px' }}>🚨 Action Items / Directives (Logs to Timeline)</label>
+              {formActionItems.map((item, index) => (
+                <div key={index} style={{ position: 'relative' }}>
+                  <textarea placeholder="Write a specialized action item required by the participant..." value={item} onChange={e => { const newItems = [...formActionItems]; newItems[index] = e.target.value; setFormActionItems(newItems); }} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '60px', fontFamily: 'inherit', background: 'var(--color-zinc-50)' }} />
+                  <button type="button" onClick={() => setFormActionItems(formActionItems.filter((_, i) => i !== index))} style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--color-zinc-200)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-600)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>X</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setFormActionItems([...formActionItems, ''])} style={{ alignSelf: 'flex-start', background: 'transparent', border: '1px solid var(--color-zinc-200)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-600)', cursor: 'pointer' }}>
+                + Add Action Item
+              </button>
             </div>
           )}
 

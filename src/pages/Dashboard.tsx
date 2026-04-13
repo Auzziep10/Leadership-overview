@@ -262,6 +262,11 @@ export function Dashboard() {
     setModalType('update');
   };
 
+  const openTaskUpdateModal = (taskId: string) => {
+    setFormTaskId(taskId);
+    setModalType('update');
+  };
+
   const openReplyModal = (updateId: string) => {
     setActiveUpdateId(updateId);
     setModalType('reply-update');
@@ -378,6 +383,8 @@ export function Dashboard() {
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
                   onEditTask={openEditTaskModal}
+                  onActionItem={openActionItemModal}
+                  onLogUpdateClick={openTaskUpdateModal}
                   onReorderTasks={handleReorderTasks}
                 />
               );
@@ -434,6 +441,8 @@ export function Dashboard() {
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
                   onEditTask={openEditTaskModal}
+                  onActionItem={openActionItemModal}
+                  onLogUpdateClick={openTaskUpdateModal}
                   onReorderTasks={handleReorderTasks}
                 />
               </div>
@@ -484,6 +493,7 @@ export function Dashboard() {
                     onReplyClick={openReplyModal}
                     onEditTask={openEditTaskModal}
                     onActionItem={openActionItemModal}
+                    onLogUpdateClick={openTaskUpdateModal}
                     onReorderTasks={handleReorderTasks}
                   />
                 </div>

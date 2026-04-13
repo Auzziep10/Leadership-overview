@@ -22,6 +22,7 @@ interface TimelineCardProps {
   onEditDates?: () => void;
   onEditTask?: (task: any) => void;
   onActionItem?: (task: any) => void;
+  onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   tasks?: { id: string; title: string }[];
   assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; }[];
@@ -46,6 +47,7 @@ export function TimelineCard({
   onEditDates,
   onEditTask,
   onActionItem,
+  onLogUpdateClick,
   onReorderTasks,
   tasks = [],
   assignedTasks = []
@@ -333,16 +335,30 @@ export function TimelineCard({
                                   })}
 
                                   {onReplyClick && canReply && (
-                                    <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '10px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                      + Add Reply
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                      <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '10px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                        + Add Reply
+                                      </button>
+                                      {n.is_action_item && onLogUpdateClick && (
+                                        <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '10px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '4px', cursor: 'pointer', padding: '3px 10px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                          + Add Separate Timeline Note
+                                        </button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               )}
                               {onReplyClick && canReply && messages.length === 0 && (
-                                <button onClick={() => onReplyClick(n.id)} style={{ alignSelf: 'flex-start', marginTop: '6px', fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', transition: 'all 0.2s' }}>
-                                  + Add Thread Message
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                  <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', transition: 'all 0.2s' }}>
+                                    + Add Thread Message
+                                  </button>
+                                  {n.is_action_item && onLogUpdateClick && (
+                                    <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', transition: 'all 0.2s' }}>
+                                      + Add Separate Timeline Note
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>

@@ -189,7 +189,7 @@ export function Dashboard() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}>
+      <div className="dashboard-toggles" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}>
         <button 
           onClick={() => setView('team')}
           style={{ 

@@ -73,7 +73,7 @@ export function TopNav() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div className="nav-controls" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <Menu size={20} cursor="pointer" />
           <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             <span style={{ cursor: 'pointer', borderBottom: location.pathname === '/' ? '2px solid var(--color-zinc-900)' : 'none', color: location.pathname === '/' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)' }} onClick={() => navigate('/')}>DASHBOARD</span>

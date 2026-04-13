@@ -294,3 +294,87 @@ body {
   border-color: var(--color-zinc-400);
   background: var(--color-zinc-50);
 }
+
+/* Mobile Responsiveness Rules */
+@media (max-width: 768px) {
+  .header-nav {
+    padding: 0 16px;
+    height: auto;
+    min-height: 72px;
+    flex-direction: column;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    gap: 16px;
+  }
+  
+  .header-nav > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nav-controls {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .search-bar {
+    width: 100%;
+    max-width: none;
+    flex: 1;
+  }
+  
+  /* Mobile Dashboard View Toggles */
+  .dashboard-toggles {
+    flex-direction: column;
+    padding: 0 16px;
+  }
+  
+  .dashboard-toggles button {
+    width: 100%;
+  }
+
+  /* Card Content Wrapping */
+  .card-container {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .card-container > div:first-child {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
+
+  .card-left {
+    flex: unset;
+    width: 100%;
+  }
+
+  .timeline-track {
+    width: 100%;
+    margin: 32px 0 16px 0;
+    padding: 0;
+  }
+
+  /* Compact the timeline borders slightly */
+  .timeline-line, .timeline-progress, .timeline-nodes {
+    left: 8px; right: 8px;
+  }
+
+  .card-right {
+    flex: unset;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid var(--color-zinc-100);
+    padding-top: 16px;
+    margin-top: 8px;
+  }
+  
+  .pill-button {
+    min-width: auto;
+    flex: 1;
+    justify-content: center;
+  }
+}

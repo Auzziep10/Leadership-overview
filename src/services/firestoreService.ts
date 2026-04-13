@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import type { User, Role, Project, Task, TaskUpdate } from '../types';
 

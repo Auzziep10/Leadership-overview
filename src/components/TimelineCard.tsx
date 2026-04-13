@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
 import type { TaskUpdate } from '../types';

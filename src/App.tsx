@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { TopNav } from './components/TopNav';
 import { Dashboard } from './pages/Dashboard';
@@ -6,7 +5,7 @@ import { TeamHierarchy } from './pages/TeamHierarchy';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { Login } from './pages/Login';
 
-const ProtectedRoute = ({ children, requireAdmin = false }: { children: JSX.Element, requireAdmin?: boolean }) => {
+const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
   const { user, loading } = useAuth();
   
   if (loading) return null; // No UI flicker during fast checks

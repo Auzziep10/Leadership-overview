@@ -231,7 +231,7 @@ export function TopNav() {
          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Settings</span>
       </div>
 
-      <Modal isOpen={isSettingsOpen} onClose={() => { setIsSettingsOpen(false); setImageSrc(null); }} title="Account Settings">
+      <Modal isOpen={isSettingsOpen} onClose={() => { setIsSettingsOpen(false); setImageSrc(null); }} title="Account Settings" maxWidth={settingsTab === 'signature' && !imageSrc ? '920px' : '500px'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {imageSrc ? (

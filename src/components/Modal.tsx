@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps) {
   if (!isOpen) return null;
   return (
     <div style={{ 
@@ -25,8 +26,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         background: 'white', 
         borderRadius: '24px', 
         width: '100%', 
-        maxWidth: '500px', 
+        maxWidth: maxWidth || '500px', 
         padding: '32px', 
+        maxHeight: '90vh',
+        overflowY: 'auto',
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column'

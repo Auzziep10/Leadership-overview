@@ -49,7 +49,10 @@ export function TeamHierarchy() {
     const reportsTo = window.prompt("Enter Manager's User ID they report to (leave blank if Top-level):\n" + possibleManagers.map(u => `${u.name} ID: [${u.id}]`).join('\n') + "\n\nManager ID:", user.reports_to || '');
     if (reportsTo === null) return;
 
-    await updateUserRoleAndHierarchy(user.id, roleId, reportsTo);
+    const systemRole = window.prompt("Enter System Access Tier (staff, admin, owner):", user.role || 'staff');
+    if (systemRole === null || !['staff', 'admin', 'owner'].includes(systemRole.toLowerCase())) return;
+
+    await updateUserRoleAndHierarchy(user.id, roleId, reportsTo, systemRole);
     loadData();
   };
 
@@ -94,7 +97,7 @@ export function TeamHierarchy() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <div className="card-title" style={{ fontSize: '16px' }}>{user.name}</div>
-              <div className="card-subtitle">{userRole ? userRole.name : user.role || 'No Role'}</div>
+              <div className="card-subtitle">{userRole ? userRole.name : user.role || 'No Role'} • SYSTEM TIER: {(user.role || 'staff').toUpperCase()}</div>
               <div style={{ fontSize: '9px', color: 'var(--color-zinc-400)', marginTop: '4px' }}>ID: {user.id}</div>
             </div>
           </div>

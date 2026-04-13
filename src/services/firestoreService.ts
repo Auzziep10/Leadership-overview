@@ -38,11 +38,14 @@ export const fetchUsers = async (): Promise<User[]> => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
 };
 
-export const updateUserRoleAndHierarchy = async (userId: string, role_id: string, reports_to: string | null) => {
-  await updateDoc(doc(db, 'users', userId), { 
+export const updateUserRoleAndHierarchy = async (userId: string, role_id: string, reports_to: string | null, systemRole?: string) => {
+  const updates: any = { 
     role_id: role_id || null, 
     reports_to: reports_to || null 
-  });
+  };
+  if (systemRole) updates.role = systemRole.toLowerCase();
+  
+  await updateDoc(doc(db, 'users', userId), updates);
 };
 
 export const updateUserAvatar = async (userId: string, avatarDataUrl: string) => {

@@ -30,6 +30,15 @@ export function TopNav() {
   const [settingsTab, setSettingsTab] = useState<'profile' | 'signature'>('profile');
   const [sigTitle, setSigTitle] = useState('');
   const [sigLocation, setSigLocation] = useState('');
+  const [sigFullName, setSigFullName] = useState('');
+  const [sigPhone, setSigPhone] = useState('');
+  const [sigEmail, setSigEmail] = useState('');
+  const [sigLinkedin, setSigLinkedin] = useState('https://linkedin.com/');
+  const [sigWebsite, setSigWebsite] = useState('https://wovnapparel.com');
+  const [sigFraming, setSigFraming] = useState('Top Aligned');
+  const [sigProfileUrl, setSigProfileUrl] = useState('');
+  const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
+  const [sigGlobalLogo, setSigGlobalLogo] = useState('');
 
   useEffect(() => {
     if (user && isSettingsOpen) {
@@ -37,8 +46,13 @@ export function TopNav() {
       setPersonalEmail(user.email || '');
       setPersonalPhone(user.phone || '');
       setNewPassword('');
-      setSigTitle(user.role || 'Title & Tagline');
-      setSigLocation('Location Details');
+      setSigTitle(user.role || 'Executive Fulfillment Team');
+      setSigLocation('Rio Rancho, NM');
+      setSigFullName(user.name || '');
+      setSigPhone(user.phone || '5053065100');
+      setSigEmail(user.email || 'austin@catalyst.com.co');
+      setSigProfileUrl(user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80');
+      setSigGlobalLogo('https://wovn.vercel.app/wovn-signature-logo.png'); // placeholder
     }
   }, [user, isSettingsOpen]);
 
@@ -129,8 +143,8 @@ export function TopNav() {
 
   const generateSignatureHTML = () => {
     if (!user) return '';
-    const bannerUrl = 'https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop';
-    const avatarUrl = user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80';
+    const bannerUrl = sigGlobalBanner || 'https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop';
+    const avatarUrl = sigProfileUrl || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80';
     
     return `
 <table cellpadding="0" cellspacing="0" border="0" width="400" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 400px; min-width: 400px; width: 400px; background-color: #ffffff;">
@@ -138,31 +152,41 @@ export function TopNav() {
     <td style="height: auto;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
-          <td height="80" style="background-color: #18181b; background-image: url('${bannerUrl}'); background-size: cover; background-position: center; height: 80px; width: 100%;">
+          <td height="80" style="background-color: #f4f4f5; background-image: url('${bannerUrl}'); background-size: cover; background-position: center; height: 80px; width: 100%; border-radius: 16px 16px 0 0;">
           </td>
         </tr>
       </table>
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
-          <td width="60" valign="top" style="width: 60px;">
-            <div style="margin-top: -30px;">
-              <img src="${avatarUrl}" width="60" height="60" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover;" alt="${user.name}">
+          <td width="72" valign="top" style="width: 72px;">
+            <div style="margin-top: -36px;">
+              <img src="${avatarUrl}" width="72" height="72" style="width: 72px; height: 72px; border-radius: 50%; border: 4px solid #ffffff; display: block; object-fit: cover;" alt="${sigFullName}">
             </div>
           </td>
-          <td width="308"></td>
+          <td width="296"></td>
         </tr>
       </table>
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 12px;">
         <tr>
           <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
           <td width="368" valign="top">
-            <div style="font-weight: 700; font-size: 16px; color: #18181b; margin: 0; padding: 0; letter-spacing: -0.02em;">${user.name}</div>
-            <div style="font-size: 10px; color: #71717a; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
-            <div style="font-size: 10px; color: #a1a1aa; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
-            <div style="margin-top: 16px; border-top: 1px solid #e4e4e7; padding-top: 16px; padding-bottom: 24px;">
-              <div style="font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #18181b; margin: 0; padding: 0;">Leadership Overview Inc.</div>
-              <div style="font-size: 10px; color: #a1a1aa; margin: 4px 0 0 0;">CONFIDENTIAL INTERNAL DOMAIN</div>
+            <div style="font-weight: 800; font-size: 20px; color: #18181b; margin: 0; padding: 0; letter-spacing: -0.03em;">${sigFullName}</div>
+            <div style="font-size: 13px; color: #71717a; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
+            <div style="font-size: 13px; color: #a1a1aa; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
+            
+            <div style="margin-top: 16px; margin-bottom: 24px;">
+               <a href="tel:${sigPhone}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/iphone.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Phone" /></a>
+               <a href="mailto:${sigEmail}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/speech-bubble-with-dots.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Chat" /></a>
+               <a href="${sigWebsite}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/domain.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Web" /></a>
+               <a href="${sigLinkedin}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/linkedin.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="LinkedIn" /></a>
+            </div>
+
+            ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="140" style="display:block; margin-bottom:24px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: #18181b; margin-bottom: 24px; letter-spacing: -0.05em;">WOV/V</div>`}
+
+            <div style="border-top: 1px solid #f4f4f5; padding-top: 16px; padding-bottom: 24px;">
+              <div style="font-size: 7px; color: #a1a1aa; margin: 0; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">CONFIDENTIALITY NOTICE:</div>
+              <div style="font-size: 7px; color: #d4d4d8; margin: 4px 0 0 0; line-height: 1.4;">CONFIDENTIALITY NOTICE: THE CONTENTS OF THIS EMAIL MESSAGE AND ANY ATTACHMENTS ARE INTENDED SOLELY FOR THE ADDRESSEE(S) AND MAY CONTAIN CONFIDENTIAL AND/OR PRIVILEGED INFORMATION AND MAY BE LEGALLY PROTECTED FROM DISCLOSURE. IF YOU ARE NOT THE INTENDED RECIPIENT OF THIS MESSAGE OR THEIR AGENT, OR IF THIS MESSAGE HAS BEEN ADDRESSED TO YOU IN ERROR, PLEASE IMMEDIATELY ALERT THE SENDER BY REPLY EMAIL AND THEN DELETE THIS MESSAGE AND ANY ATTACHMENTS. IF YOU ARE NOT THE INTENDED RECIPIENT, YOU ARE HEREBY NOTIFIED THAT ANY USE, DISSEMINATION, COPYING, OR STORAGE OF THIS MESSAGE OR ITS ATTACHMENTS IS STRICTLY PROHIBITED.</div>
             </div>
           </td>
         </tr>
@@ -298,24 +322,114 @@ export function TopNav() {
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start', background: 'var(--color-zinc-50)', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-zinc-100)' }}>
+                  
                   {/* Left Column Controls */}
-                  <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px' }}>
-                     <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'var(--font-serif)', borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        👤 Personal Details
-                     </div>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Full Name (From DB)</label>
-                       <input type="text" value={user.name} disabled style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', backgroundColor: 'var(--color-zinc-50)', color: 'var(--color-zinc-500)', fontSize: '12px' }} />
-                     </div>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Title & Tagline</label>
-                       <input type="text" value={sigTitle} onChange={e => setSigTitle(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px' }} />
-                     </div>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                       <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)' }}>Location</label>
-                       <input type="text" value={sigLocation} onChange={e => setSigLocation(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px' }} />
-                     </div>
+                  <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    
+                    {/* PC Card: Personal Details */}
+                    <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         👤 Personal Details
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                           <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Active Profile</label>
+                           <select style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }}><option>Main Signature</option></select>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                           <button style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', background: 'var(--color-zinc-50)', cursor: 'pointer', fontWeight: 600 }}>+</button>
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                           <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Profile Name</label>
+                           <input type="text" value="Main Signature" readOnly style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Full Name</label>
+                        <input type="text" value={sigFullName} onChange={e => setSigFullName(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Title & Tagline</label>
+                        <input type="text" value={sigTitle} onChange={e => setSigTitle(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Location</label>
+                        <input type="text" value={sigLocation} onChange={e => setSigLocation(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Profile Image</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                           <input type="text" value={sigProfileUrl} onChange={e => setSigProfileUrl(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                           <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Framing</label>
+                        <select value={sigFraming} onChange={e => setSigFraming(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', width: '140px', outline: 'none' }}>
+                          <option>Top Aligned</option>
+                          <option>Centered</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Phone Number</label>
+                          <input type="text" value={sigPhone} onChange={e => setSigPhone(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Email Address</label>
+                          <input type="text" value={sigEmail} onChange={e => setSigEmail(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>LinkedIn URL</label>
+                          <input type="text" value={sigLinkedin} onChange={e => setSigLinkedin(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Website URL</label>
+                          <input type="text" value={sigWebsite} onChange={e => setSigWebsite(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                        </div>
+                      </div>
+
+                      <button onClick={() => alert("Local configurator state preserved.")} style={{ background: '#000000', color: 'white', fontWeight: 600, padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '12px' }}>
+                        Save My Details
+                      </button>
+                    </div>
+
+                    {/* PC Card: Global Banner Details */}
+                    {!isStaff && (
+                      <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                         <div style={{ fontSize: '14px', fontWeight: 600, borderBottom: '1px solid var(--color-zinc-100)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            🌐 Global Banner Details (Admin)
+                         </div>
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Background Banner</label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                             <input type="text" value={sigGlobalBanner} onChange={e => setSigGlobalBanner(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                             <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                          </div>
+                        </div>
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-500)' }}>Global Logo</label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                             <input type="text" value={sigGlobalLogo} onChange={e => setSigGlobalLogo(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                             <button style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)' }}>↑</button>
+                          </div>
+                        </div>
+                        <button onClick={() => alert("Global banner configurations preserved.")} style={{ background: '#000000', color: 'white', fontWeight: 600, padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '12px' }}>
+                          Save Global Banner
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Right Column Preview */}

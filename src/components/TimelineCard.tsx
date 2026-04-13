@@ -81,10 +81,10 @@ export function TimelineCard({
         </div>
 
       <div className="timeline-track">
-        <div style={{ position: 'absolute', left: '24px', top: '-24px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-400)' }}>
+        <div className="timeline-date timeline-date-start">
           {format(new Date(tStart), 'MMM d, yyyy')}
         </div>
-        <div style={{ position: 'absolute', right: '24px', top: '-24px', fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>
+        <div className="timeline-date timeline-date-end">
           {format(new Date(tEnd), 'MMM d, yyyy')}
         </div>
 

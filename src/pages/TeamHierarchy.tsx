@@ -15,6 +15,11 @@ export function TeamHierarchy() {
   const [regName, setRegName] = useState('');
   const [regWait, setRegWait] = useState(false);
 
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editRoleId, setEditRoleId] = useState('');
+  const [editReportsTo, setEditReportsTo] = useState('');
+  const [editSystemRole, setEditSystemRole] = useState('staff');
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -41,18 +46,18 @@ export function TeamHierarchy() {
     loadData();
   };
 
-  const handleEditUser = async (user: User) => {
-    const roleId = window.prompt("Enter Role ID for this user:\n" + roles.map(r => `${r.name} ID: [${r.id}]`).join('\n') + "\n\nRole ID:", user.role_id || '');
-    if (roleId === null) return;
-    
-    const possibleManagers = users.filter(u => u.id !== user.id);
-    const reportsTo = window.prompt("Enter Manager's User ID they report to (leave blank if Top-level):\n" + possibleManagers.map(u => `${u.name} ID: [${u.id}]`).join('\n') + "\n\nManager ID:", user.reports_to || '');
-    if (reportsTo === null) return;
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditRoleId(user.role_id || '');
+    setEditReportsTo(user.reports_to || '');
+    setEditSystemRole(user.role || 'staff');
+  };
 
-    const systemRole = window.prompt("Enter System Access Tier (staff, admin, owner):", user.role || 'staff');
-    if (systemRole === null || !['staff', 'admin', 'owner'].includes(systemRole.toLowerCase())) return;
-
-    await updateUserRoleAndHierarchy(user.id, roleId, reportsTo, systemRole);
+  const saveEditPlacement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    await updateUserRoleAndHierarchy(editingUser.id, editRoleId, editReportsTo, editSystemRole);
+    setEditingUser(null);
     loadData();
   };
 
@@ -205,6 +210,38 @@ export function TeamHierarchy() {
           <button type="submit" disabled={regWait} className="auth-button" style={{ opacity: regWait ? 0.7 : 1 }}>
             {regWait ? 'Registering...' : 'Provision Account'}
           </button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title={`Edit Placement for ${editingUser?.name}`}>
+        <form onSubmit={saveEditPlacement} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Job Role</label>
+            <select value={editRoleId} onChange={e => setEditRoleId(e.target.value)} style={{ padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="">No Role / Unassigned</option>
+              {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reports To (Manager)</label>
+            <select value={editReportsTo} onChange={e => setEditReportsTo(e.target.value)} style={{ padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="">Top Level (No Manager)</option>
+              {users.filter(u => u.id !== editingUser?.id).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>System Access Tier</label>
+            <select value={editSystemRole} onChange={e => setEditSystemRole(e.target.value)} style={{ padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="staff">Staff (Limited Access)</option>
+              <option value="admin">Admin (Standard Dashboard Access)</option>
+              <option value="owner">Owner (Full Operations Access)</option>
+            </select>
+          </div>
+
+          <button type="submit" className="auth-button" style={{ marginTop: '8px' }}>Save Layout Changes</button>
         </form>
       </Modal>
     </div>

@@ -514,13 +514,8 @@ export function TimelineCard({
                                       {onReplyClick && canReply && (
                                         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                                           <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                            + Add Reply
+                                            {n.is_action_item ? '+ Add Action Item Log' : '+ Add Reply'}
                                           </button>
-                                          {n.is_action_item && onLogUpdateClick && (
-                                            <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '6px', cursor: 'pointer', padding: '5px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                              + Add Log to Action Item
-                                            </button>
-                                          )}
                                         </div>
                                       )}
                                     </div>
@@ -529,13 +524,8 @@ export function TimelineCard({
                                   {onReplyClick && canReply && messages.length === 0 && (
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                                       <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
-                                        + Add Thread Message
+                                        {n.is_action_item ? '+ Add Action Item Log' : '+ Add Thread Message'}
                                       </button>
-                                      {n.is_action_item && onLogUpdateClick && (
-                                        <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
-                                          + Add Log to Action Item
-                                        </button>
-                                      )}
                                     </div>
                                   )}
                               </div>

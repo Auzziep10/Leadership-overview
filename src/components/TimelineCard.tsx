@@ -213,7 +213,7 @@ export function TimelineCard({
               }
             }
             
-            const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === node.author_id;
+            const canReply = true;
 
             return (
               <div key={node.id} className="timeline-node-wrapper" style={{ position: 'absolute', left: `${pct}%`, top: '0', transform: 'translate(-50%, -50%)' }}>
@@ -443,7 +443,7 @@ export function TimelineCard({
                                 messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
                               }
                             }
-                            const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === n.author_id;
+                            const canReply = true;
 
                             const content = (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)', cursor: isDraggable ? 'grab' : 'default' }}>
@@ -503,10 +503,33 @@ export function TimelineCard({
                                         const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
                                         return (
                                           <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
-                                            <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
-                                              {mAuthorName} Replied:
-                                            </strong>
-                                            {msg.message}
+                                            {(() => {
+                                              const isProgressUpdate = msg.message.startsWith('[Advanced to');
+                                              let progressPill = '';
+                                              let actualMessage = msg.message;
+                                              
+                                              if (isProgressUpdate) {
+                                                const endBracket = msg.message.indexOf(']');
+                                                if (endBracket !== -1) {
+                                                  progressPill = msg.message.substring(1, endBracket);
+                                                  actualMessage = msg.message.substring(endBracket + 1).trim();
+                                                }
+                                              }
+                                              
+                                              return (
+                                                <>
+                                                  <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
+                                                    <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : 'REPLIED:'}</span>
+                                                    {isProgressUpdate && progressPill && (
+                                                      <span style={{ background: color, color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>
+                                                        {progressPill}
+                                                      </span>
+                                                    )}
+                                                  </strong>
+                                                  <span>{actualMessage}</span>
+                                                </>
+                                              );
+                                            })()}
                                           </div>
                                         );
                                       })}

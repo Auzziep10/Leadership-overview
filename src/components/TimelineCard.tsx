@@ -110,7 +110,7 @@ export function TimelineCard({
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
-  const [collapsedActionItems, setCollapsedActionItems] = useState<Record<string, boolean>>({});
+  const [expandedActionItems, setExpandedActionItems] = useState<Record<string, boolean>>({});
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localTasks, setLocalTasks] = useState(assignedTasks || []);
   const [localUpdates, setLocalUpdates] = useState(updates || []);
@@ -455,12 +455,12 @@ export function TimelineCard({
                                     onClick={(e) => {
                                       if (n.is_action_item) {
                                         e.stopPropagation();
-                                        setCollapsedActionItems(prev => ({ ...prev, [n.id]: !prev[n.id] }));
+                                        setExpandedActionItems(prev => ({ ...prev, [n.id]: !prev[n.id] }));
                                       }
                                     }}
                                     style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', cursor: n.is_action_item ? 'pointer' : 'default', transition: 'all 0.2s' }}
                                   >
-                                    {n.is_action_item ? `${collapsedActionItems[n.id] ? '▶' : '▼'} 🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
+                                    {n.is_action_item ? `${!expandedActionItems[n.id] ? '▶' : '▼'} 🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     {n.is_action_item && onUpdateActionItem && (
@@ -507,7 +507,7 @@ export function TimelineCard({
                                   {n.note}
                                 </div>
                                   
-                                  {messages.length > 0 && (!n.is_action_item || !collapsedActionItems[n.id]) && (
+                                  {messages.length > 0 && (!n.is_action_item || expandedActionItems[n.id]) && (
                                     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column' }}>
                                       {(() => {
                                         const map = new Map();
@@ -609,11 +609,11 @@ export function TimelineCard({
                                     </div>
                                   )}
                                   
-                                  {n.is_action_item && collapsedActionItems[n.id] && messages.length > 0 && (
+                                  {n.is_action_item && !expandedActionItems[n.id] && messages.length > 0 && (
                                     <div 
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setCollapsedActionItems(prev => ({ ...prev, [n.id]: false }));
+                                        setExpandedActionItems(prev => ({ ...prev, [n.id]: true }));
                                       }}
                                       style={{ marginTop: '8px', padding: '8px 12px', background: 'var(--color-zinc-50)', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', fontSize: '11px', color: 'var(--color-zinc-500)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', transition: 'all 0.2s' }}
                                     >
@@ -622,7 +622,7 @@ export function TimelineCard({
                                     </div>
                                   )}
                                   
-                                  {onReplyClick && canReply && messages.length === 0 && (!n.is_action_item || !collapsedActionItems[n.id]) && (
+                                  {onReplyClick && canReply && messages.length === 0 && (!n.is_action_item || expandedActionItems[n.id]) && (
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                                       <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
                                         + Add Thread Message

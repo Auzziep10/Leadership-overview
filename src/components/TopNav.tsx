@@ -317,26 +317,35 @@ export function TopNav() {
       ctx.drawImage(aImg, ax, ay, asize, asize);
       ctx.restore();
 
-      const bakedBase64 = canvas.toDataURL('image/png', 1.0);
-      const compositeUrl = await uploadSignatureAsset(bakedBase64);
+      const bakeJob = async () => {
+        const bakedBase64 = canvas.toDataURL('image/png', 1.0);
+        const compositeUrl = await uploadSignatureAsset(bakedBase64);
+        const html = generateSignatureHTML(compositeUrl);
+        return new Blob([html], { type: 'text/html' });
+      };
 
-      const html = generateSignatureHTML(compositeUrl);
-      const blob = new Blob([html], { type: 'text/html' });
-      const clipboardItem = new window.ClipboardItem({ 'text/html': blob });
-      await navigator.clipboard.write([clipboardItem]);
-      alert('High-fidelity signature copied to clipboard globally! Open your Gmail or Outlook settings and hit paste to install.');
-    } catch(err) {
-      console.warn(err);
-      // Fallback
       try {
-        const html = generateSignatureHTML();
-        const blob = new Blob([html], { type: 'text/html' });
-        const clipboardItem = new window.ClipboardItem({ 'text/html': blob });
-        await navigator.clipboard.write([clipboardItem]);
-        alert("Clipboard saved! (Note: Used HTML fallback because Canvas CORS was blocked)");
-      } catch (fbErr) {
-        alert("Clipboard API failure. Ensure your browser is secure context.");
+        // Safari/WebKit requires the promise to be passed directly to lock the user-gesture tick synchronously
+        const item = new window.ClipboardItem({ 'text/html': bakeJob() });
+        await navigator.clipboard.write([item]);
+        alert('High-fidelity signature copied to clipboard! Open your Gmail or Outlook settings and hit paste to install.');
+      } catch (err) {
+        try {
+          // Firefox/Chrome rejects the Promise format above, so use strict Blob resolution
+          const blob = await bakeJob();
+          const item = new window.ClipboardItem({ 'text/html': blob });
+          await navigator.clipboard.write([item]);
+          alert('High-fidelity signature copied to clipboard globally! Open your Gmail or Outlook settings and hit paste to install.');
+        } catch (fbErr) {
+          const fallbackHtml = generateSignatureHTML();
+          const fallbackBlob = new Blob([fallbackHtml], { type: 'text/html' });
+          await navigator.clipboard.write([new window.ClipboardItem({ 'text/html': fallbackBlob })]);
+          alert('Signature copied fallback! (Note: Used layout fallback because primary composite was blocked contextually)');
+        }
       }
+    } catch(err) {
+      console.error(err);
+      alert("Clipboard API failure. Ensure your browser is running secure context HTTPS or try copying the preview manually.");
     } finally {
       setBaking(false);
     }

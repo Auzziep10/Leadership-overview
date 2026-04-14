@@ -14,6 +14,7 @@ export function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -219,7 +220,25 @@ export function TopNav() {
         </div>
         
         <div className="nav-controls" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <Menu size={20} cursor="pointer" />
+          <div style={{ position: 'relative' }}>
+            <Menu size={20} cursor="pointer" onClick={() => setIsMenuOpen(!isMenuOpen)} />
+            {isMenuOpen && (
+              <>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} onClick={() => setIsMenuOpen(false)} />
+                <div style={{ position: 'absolute', top: '100%', left: '0', marginTop: '12px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 1000, minWidth: '220px' }}>
+                  <a href="https://wovn-garment-catalog.vercel.app" target="_blank" rel="noreferrer" style={{ display: 'block', padding: '12px 16px', fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-900)', textDecoration: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--color-zinc-50)'} onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                    Garment Catalog
+                  </a>
+                  <a href="https://print-shop-os-beta.vercel.app" target="_blank" rel="noreferrer" style={{ display: 'block', padding: '12px 16px', fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-900)', textDecoration: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--color-zinc-50)'} onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                    Print Shop OS
+                  </a>
+                  <a href="https://tech-pack-creator.vercel.app" target="_blank" rel="noreferrer" style={{ display: 'block', padding: '12px 16px', fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-900)', textDecoration: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--color-zinc-50)'} onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                    Tech Pack Creator
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             <span style={{ cursor: 'pointer', borderBottom: location.pathname === '/' ? '2px solid var(--color-zinc-900)' : 'none', color: location.pathname === '/' ? 'var(--color-zinc-900)' : 'var(--color-zinc-500)' }} onClick={() => navigate('/')}>DASHBOARD</span>
             {(user?.role === 'owner' || user?.role === 'admin') && (

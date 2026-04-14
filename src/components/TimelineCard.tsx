@@ -110,6 +110,7 @@ export function TimelineCard({
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [collapsedActionItems, setCollapsedActionItems] = useState<Record<string, boolean>>({});
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localTasks, setLocalTasks] = useState(assignedTasks || []);
   const [localUpdates, setLocalUpdates] = useState(updates || []);
@@ -450,8 +451,16 @@ export function TimelineCard({
                             const content = (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)', cursor: isDraggable ? 'grab' : 'default' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                                  <div style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px' }}>
-                                    {n.is_action_item ? `🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
+                                  <div 
+                                    onClick={(e) => {
+                                      if (n.is_action_item) {
+                                        e.stopPropagation();
+                                        setCollapsedActionItems(prev => ({ ...prev, [n.id]: !prev[n.id] }));
+                                      }
+                                    }}
+                                    style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', cursor: n.is_action_item ? 'pointer' : 'default', transition: 'all 0.2s' }}
+                                  >
+                                    {n.is_action_item ? `${collapsedActionItems[n.id] ? '▶' : '▼'} 🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     {n.is_action_item && onUpdateActionItem && (
@@ -498,7 +507,7 @@ export function TimelineCard({
                                   {n.note}
                                 </div>
                                   
-                                  {messages.length > 0 && (
+                                  {messages.length > 0 && (!n.is_action_item || !collapsedActionItems[n.id]) && (
                                     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column' }}>
                                       {(() => {
                                         const map = new Map();
@@ -600,7 +609,20 @@ export function TimelineCard({
                                     </div>
                                   )}
                                   
-                                  {onReplyClick && canReply && messages.length === 0 && (
+                                  {n.is_action_item && collapsedActionItems[n.id] && messages.length > 0 && (
+                                    <div 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCollapsedActionItems(prev => ({ ...prev, [n.id]: false }));
+                                      }}
+                                      style={{ marginTop: '8px', padding: '8px 12px', background: 'var(--color-zinc-50)', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', fontSize: '11px', color: 'var(--color-zinc-500)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', transition: 'all 0.2s' }}
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                      {messages.filter(m => m.message.startsWith('[LOG] ') || m.message.startsWith('[Advanced to')).length} Logs, {messages.filter(m => !m.message.startsWith('[LOG] ') && !m.message.startsWith('[Advanced to')).length} Messages
+                                    </div>
+                                  )}
+                                  
+                                  {onReplyClick && canReply && messages.length === 0 && (!n.is_action_item || !collapsedActionItems[n.id]) && (
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                                       <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
                                         + Add Thread Message

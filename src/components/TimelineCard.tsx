@@ -521,8 +521,14 @@ export function TimelineCard({
                                                 actualMessage = msg.message.substring(6).trim();
                                               }
                                               
+                                              const isConversationalReply = !isProgressUpdate && !isExplicitLog;
+                                              
                                               return (
-                                                <>
+                                                <div style={{ 
+                                                  marginLeft: isConversationalReply ? '16px' : '0', 
+                                                  paddingLeft: isConversationalReply ? '12px' : '0', 
+                                                  borderLeft: isConversationalReply ? '2px solid var(--color-zinc-200)' : 'none' 
+                                                }}>
                                                   <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
                                                     <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : (isExplicitLog ? 'LOGGED AN UPDATE:' : 'REPLIED:')}</span>
                                                     {isProgressUpdate && progressPill && (
@@ -532,7 +538,7 @@ export function TimelineCard({
                                                     )}
                                                   </strong>
                                                   <span>{actualMessage}</span>
-                                                </>
+                                                </div>
                                               );
                                             })()}
                                           </div>

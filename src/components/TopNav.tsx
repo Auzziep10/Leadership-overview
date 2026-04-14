@@ -301,9 +301,9 @@ export function TopNav() {
       ctx.clearRect(0, 0, 1200, 340);
       ctx.drawImage(bImg, 0, 0, 1200, 240);
 
-      const asize = 280;
-      const ax = 96;
-      const ay = 60;
+      const asize = 252;
+      const ax = 110;
+      const ay = 74;
 
       ctx.beginPath();
       ctx.arc(ax + asize/2, ay + asize/2, asize/2 + 6, 0, Math.PI * 2);
@@ -365,8 +365,8 @@ export function TopNav() {
                <tr>
                  <td width="48" style="width: 48px;"></td>
                  <td valign="top" style="position: relative;">
-                    <div style="margin-top: -100px;">
-                       <img src="${avatarUrl}" width="140" height="140" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
+                    <div style="margin-top: -93px;">
+                       <img src="${avatarUrl}" width="126" height="126" style="width: 126px; height: 126px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
                     </div>
                  </td>
                </tr>

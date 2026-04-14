@@ -19,7 +19,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'progress-log' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | null>(null);
   const [showArchives, setShowArchives] = useState(false);
   const [progressLogTaskId, setProgressLogTaskId] = useState('');
   const [progressLogActionItemId, setProgressLogActionItemId] = useState('');
@@ -239,7 +239,8 @@ export function Dashboard() {
   const submitReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser) {
-      await addThreadMessage(activeUpdateId, currentUser.id, formReply);
+      const payload = modalType === 'action-item-log' ? `[LOG] ${formReply}` : formReply;
+      await addThreadMessage(activeUpdateId, currentUser.id, payload);
       setModalType(null);
       setFormReply('');
       loadDashboardData();
@@ -345,6 +346,11 @@ export function Dashboard() {
   const openReplyModal = (updateId: string) => {
     setActiveUpdateId(updateId);
     setModalType('reply-update');
+  };
+
+  const openActionItemLogModal = (updateId: string) => {
+    setActiveUpdateId(updateId);
+    setModalType('action-item-log');
   };
 
   const openTasksList = (subjectName: string, items: Task[]) => {
@@ -515,6 +521,7 @@ export function Dashboard() {
                   assignedTasks={userTasks}
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
+                  onLogActionItemClick={openActionItemLogModal}
                   onEditTask={openEditTaskModal}
                   onActionItem={openActionItemModal}
                   onLogUpdateClick={openTaskUpdateModal}
@@ -650,6 +657,7 @@ export function Dashboard() {
                         assignedTasks={projTasks}
                         currentUser={currentUser}
                         onReplyClick={openReplyModal}
+                        onLogActionItemClick={openActionItemLogModal}
                         onEditTask={openEditTaskModal}
                         onActionItem={openActionItemModal}
                         onLogUpdateClick={openTaskUpdateModal}
@@ -785,6 +793,7 @@ export function Dashboard() {
                     assignedTasks={subProjTasks}
                     currentUser={currentUser}
                     onReplyClick={openReplyModal}
+                    onLogActionItemClick={openActionItemLogModal}
                     onEditTask={openEditTaskModal}
                     onActionItem={openActionItemModal}
                     onLogUpdateClick={openTaskUpdateModal}
@@ -1042,7 +1051,7 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      <Modal isOpen={modalType === 'reply-update'} onClose={() => setModalType(null)} title="Add Thread Message">
+      <Modal isOpen={modalType === 'reply-update' || modalType === 'action-item-log'} onClose={() => setModalType(null)} title={modalType === 'action-item-log' ? 'Log Update to Action Item' : 'Add Thread Message'}>
         <form onSubmit={submitReply} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>Your message will be appended to this log's active timeline thread.</div>
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />

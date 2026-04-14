@@ -65,6 +65,7 @@ interface TimelineCardProps {
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   onReorderUpdates?: (updates: { id: string, order_index: number }[]) => void;
   onUpdateActionItem?: (updateId: string, updates: Partial<TaskUpdate>) => void;
+  onLogActionItemClick?: (updateId: string) => void;
   onActionItemProgressClick?: (updateId: string, taskId: string, pct: number) => void;
   onUpdateTask?: (taskId: string, updates: any) => void;
   onProgressClick?: (taskId: string, pct: number) => void;
@@ -97,6 +98,7 @@ export function TimelineCard({
   onReorderTasks,
   onReorderUpdates,
   onUpdateActionItem,
+  onLogActionItemClick,
   onActionItemProgressClick,
   onUpdateTask,
   onProgressClick,
@@ -505,6 +507,7 @@ export function TimelineCard({
                                           <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
                                             {(() => {
                                               const isProgressUpdate = msg.message.startsWith('[Advanced to');
+                                              const isExplicitLog = msg.message.startsWith('[LOG] ');
                                               let progressPill = '';
                                               let actualMessage = msg.message;
                                               
@@ -514,12 +517,14 @@ export function TimelineCard({
                                                   progressPill = msg.message.substring(1, endBracket);
                                                   actualMessage = msg.message.substring(endBracket + 1).trim();
                                                 }
+                                              } else if (isExplicitLog) {
+                                                actualMessage = msg.message.substring(6).trim();
                                               }
                                               
                                               return (
                                                 <>
                                                   <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
-                                                    <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : 'REPLIED:'}</span>
+                                                    <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : (isExplicitLog ? 'LOGGED AN UPDATE:' : 'REPLIED:')}</span>
                                                     {isProgressUpdate && progressPill && (
                                                       <span style={{ background: color, color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>
                                                         {progressPill}
@@ -539,6 +544,11 @@ export function TimelineCard({
                                           <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
                                             + Add Thread Message
                                           </button>
+                                          {n.is_action_item && onLogActionItemClick && (
+                                            <button onClick={() => onLogActionItemClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '6px', cursor: 'pointer', padding: '5px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                              + Add Log to Action Item
+                                            </button>
+                                          )}
                                         </div>
                                       )}
                                     </div>
@@ -549,6 +559,11 @@ export function TimelineCard({
                                       <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
                                         + Add Thread Message
                                       </button>
+                                      {n.is_action_item && onLogActionItemClick && (
+                                        <button onClick={() => onLogActionItemClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
+                                          + Add Log to Action Item
+                                        </button>
+                                      )}
                                     </div>
                                   )}
                               </div>

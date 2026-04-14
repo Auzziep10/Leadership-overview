@@ -590,7 +590,7 @@ export function Dashboard() {
               )}
             </div>
             {projects.filter(p => p.status !== 'lead').length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
-            <div style={projectViewType === 'list' ? { display: 'flex', flexDirection: 'column', gap: '24px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+            <div style={projectViewType === 'list' ? { display: 'flex', flexDirection: 'column', gap: '8px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
               {projects.filter(p => p.status !== 'lead').filter(proj => {
                 if (!searchQuery) return true;
                 const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
@@ -721,6 +721,7 @@ export function Dashboard() {
                 Create New Lead +
               </button>
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {projects.filter(p => p.status === 'lead').filter(proj => {
               if (!searchQuery) return true;
               return proj.title.toLowerCase().includes(searchQuery) || (proj.customer_company && proj.customer_company.toLowerCase().includes(searchQuery));
@@ -767,6 +768,7 @@ export function Dashboard() {
                 </div>
               );
             })}
+            </div>
           </>
         )}
 

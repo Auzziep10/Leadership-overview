@@ -784,7 +784,7 @@ export function TopNav() {
                         )}
                         <div style={{ display: 'flex', gap: '4px', background: 'var(--color-zinc-100)', padding: '4px', borderRadius: '6px' }}>
                            <button onClick={() => setSigTargetPlatform('pc')} style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 600, background: sigTargetPlatform === 'pc' ? 'white' : 'transparent', border: 'none', borderRadius: '4px', boxShadow: sigTargetPlatform === 'pc' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', color: sigTargetPlatform === 'pc' ? 'black' : 'var(--color-zinc-500)', transition: 'all 0.15s ease' }}>100% Fluid (PC/Gmail)</button>
-                           <button onClick={() => setSigTargetPlatform('mac')} style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 600, background: sigTargetPlatform === 'mac' ? 'white' : 'transparent', border: 'none', borderRadius: '4px', boxShadow: sigTargetPlatform === 'mac' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', color: sigTargetPlatform === 'mac' ? 'black' : 'var(--color-zinc-500)', transition: 'all 0.15s ease' }}>Fixed 800px (Apple Mail)</button>
+                           <button onClick={() => setSigTargetPlatform('mac')} style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 600, background: sigTargetPlatform === 'mac' ? 'white' : 'transparent', border: 'none', borderRadius: '4px', boxShadow: sigTargetPlatform === 'mac' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', color: sigTargetPlatform === 'mac' ? 'black' : 'var(--color-zinc-500)', transition: 'all 0.15s ease' }}>Apple Mail (100% Width Fix)</button>
                         </div>
                       </div>
                     </div>

@@ -355,7 +355,7 @@ export function TimelineCard({
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {(() => {
               const renderTask = (task: any, idx: number) => {
-                const taskNodes = nodes.filter(n => n.task_id === task.id);
+                const taskNodes = localUpdates.filter(n => n.task_id === task.id);
                 return (
                   <div 
                     key={task.id} 

@@ -367,21 +367,7 @@ export function Dashboard() {
         >
           Team Workload
         </button>
-        <button 
-          onClick={() => setView('metrics')}
-          style={{ 
-            padding: '8px 24px', 
-            borderRadius: '99px',
-            border: '1px solid var(--color-zinc-200)',
-            background: view === 'metrics' ? 'var(--color-zinc-900)' : 'white',
-            color: view === 'metrics' ? 'white' : 'var(--color-zinc-600)',
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          Staff Metrics
-        </button>
+
         <button 
           onClick={() => setView('projects')}
           style={{ 
@@ -448,6 +434,21 @@ export function Dashboard() {
             Live Pulse
           </button>
         )}
+        <button 
+          onClick={() => setView('metrics')}
+          style={{ 
+            padding: '8px 24px', 
+            borderRadius: '99px',
+            border: '1px solid var(--color-zinc-200)',
+            background: view === 'metrics' ? 'var(--color-zinc-900)' : 'white',
+            color: view === 'metrics' ? 'white' : 'var(--color-zinc-600)',
+            fontWeight: 600,
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          Staff Metrics
+        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

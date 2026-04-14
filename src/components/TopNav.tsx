@@ -266,47 +266,54 @@ export function TopNav() {
     const avatarUrl = sigProfileUrl || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80';
     
     return `
-<table cellpadding="0" cellspacing="0" border="0" width="400" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 400px; min-width: 400px; width: 400px; background-color: #ffffff;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;">
   <tr>
-    <td style="height: auto;">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <td style="padding-bottom: 24px;">
+      
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%;">
         <tr>
-          <td height="80" style="background-color: #f4f4f5; background-image: url('${bannerUrl}'); background-size: cover; background-position: center; height: 80px; width: 100%; border-radius: 16px 16px 0 0;">
+          <td valign="top" style="position: relative;">
+            <img src="${bannerUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+               <tr>
+                 <td width="48" style="width: 48px;"></td>
+                 <td valign="top">
+                    <div style="margin-top: -80px;">
+                       <img src="${avatarUrl}" width="160" height="160" style="width: 160px; height: 160px; border-radius: 50%; border: 6px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
+                    </div>
+                 </td>
+               </tr>
+            </table>
           </td>
         </tr>
       </table>
+
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
-          <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
-          <td width="72" valign="top" style="width: 72px;">
-            <div style="margin-top: -36px;">
-              <img src="${avatarUrl}" width="72" height="72" style="width: 72px; height: 72px; border-radius: 50%; border: 4px solid #ffffff; display: block; object-fit: cover;" alt="${sigFullName}">
-            </div>
-          </td>
-          <td width="296"></td>
-        </tr>
-      </table>
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 12px;">
-        <tr>
-          <td width="32" style="width: 32px; min-width: 32px; max-width: 32px;"></td>
-          <td width="368" valign="top">
-            <div style="font-weight: 800; font-size: 20px; color: #18181b; margin: 0; padding: 0; letter-spacing: -0.03em;">${sigFullName}</div>
-            <div style="font-size: 13px; color: #71717a; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
-            <div style="font-size: 13px; color: #a1a1aa; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
+          <td width="48" style="width: 48px;"></td>
+          <td valign="top" style="padding-top: 16px;">
+            <div style="font-weight: 800; font-size: 28px; color: #111111; margin: 0; padding: 0; letter-spacing: -0.02em;">${sigFullName}</div>
+            <div style="font-weight: 300; font-size: 15px; color: #555555; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
+            <div style="font-weight: 300; font-size: 15px; color: #999999; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
             
-            <div style="margin-top: 16px; margin-bottom: 24px;">
-               <a href="tel:${sigPhone}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/iphone.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Phone" /></a>
-               <a href="mailto:${sigEmail}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/speech-bubble-with-dots.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Chat" /></a>
-               <a href="${sigWebsite}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/domain.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="Web" /></a>
-               <a href="${sigLinkedin}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/linkedin.png" width="28" height="28" style="width:28px; height:28px; border-radius:50%;" alt="LinkedIn" /></a>
+            <div style="margin-top: 20px; margin-bottom: 28px;">
+               <a href="tel:${sigPhone}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/iphone.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Phone" /></a>
+               <a href="mailto:${sigEmail}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/speech-bubble-with-dots.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Chat" /></a>
+               <a href="${sigWebsite}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/domain.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Web" /></a>
+               <a href="${sigLinkedin}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/linkedin.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="LinkedIn" /></a>
             </div>
 
-            ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="140" style="display:block; margin-bottom:24px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: #18181b; margin-bottom: 24px; letter-spacing: -0.05em;">WOV/V</div>`}
+            ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="160" style="display:block; margin-bottom:32px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 900; color: #111111; margin-bottom: 32px; letter-spacing: -0.05em;">WOV/V</div>`}
+          </td>
+        </tr>
+      </table>
 
-            <div style="border-top: 1px solid #f4f4f5; padding-top: 16px; padding-bottom: 24px;">
-              <div style="font-size: 7px; color: #a1a1aa; margin: 0; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">CONFIDENTIALITY NOTICE:</div>
-              <div style="font-size: 7px; color: #d4d4d8; margin: 4px 0 0 0; line-height: 1.4;">CONFIDENTIALITY NOTICE: THE CONTENTS OF THIS EMAIL MESSAGE AND ANY ATTACHMENTS ARE INTENDED SOLELY FOR THE ADDRESSEE(S) AND MAY CONTAIN CONFIDENTIAL AND/OR PRIVILEGED INFORMATION AND MAY BE LEGALLY PROTECTED FROM DISCLOSURE. IF YOU ARE NOT THE INTENDED RECIPIENT OF THIS MESSAGE OR THEIR AGENT, OR IF THIS MESSAGE HAS BEEN ADDRESSED TO YOU IN ERROR, PLEASE IMMEDIATELY ALERT THE SENDER BY REPLY EMAIL AND THEN DELETE THIS MESSAGE AND ANY ATTACHMENTS. IF YOU ARE NOT THE INTENDED RECIPIENT, YOU ARE HEREBY NOTIFIED THAT ANY USE, DISSEMINATION, COPYING, OR STORAGE OF THIS MESSAGE OR ITS ATTACHMENTS IS STRICTLY PROHIBITED.</div>
-            </div>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td width="48" style="width: 48px;"></td>
+          <td style="padding-bottom: 24px; padding-right: 48px;">
+            <div style="font-size: 9px; color: #aaaaaa; margin: 0; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">CONFIDENTIALITY NOTICE:</div>
+            <div style="font-size: 8px; color: #bbbbbb; margin: 4px 0 0 0; line-height: 1.5; font-weight: 400;">The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited.</div>
           </td>
         </tr>
       </table>

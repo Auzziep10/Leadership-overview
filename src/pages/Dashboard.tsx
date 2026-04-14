@@ -22,6 +22,7 @@ export function Dashboard() {
   const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'progress-log' | null>(null);
   const [showArchives, setShowArchives] = useState(false);
   const [progressLogTaskId, setProgressLogTaskId] = useState('');
+  const [progressLogActionItemId, setProgressLogActionItemId] = useState('');
   const [progressLogPct, setProgressLogPct] = useState<number>(0);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [activeUserId, setActiveUserId] = useState<string>('');
@@ -267,19 +268,26 @@ export function Dashboard() {
     e.preventDefault();
     if (!formNote || formNote.trim() === '') return;
     
-    // Update task
     const isDone = progressLogPct === 100;
-    await updateTask(progressLogTaskId, { progress: progressLogPct, status: isDone ? 'done' : (progressLogPct === 0 ? 'todo' : 'active') });
     
-    // Add timeline log
-    if (currentUser) {
-      const explicitNote = `[Advanced to ${isDone ? 'Done' : progressLogPct + '%'}] ${formNote.trim()}`;
-      await addTaskUpdate(progressLogTaskId, currentUser.id, explicitNote);
+    if (progressLogActionItemId) {
+      await updateTaskUpdate(progressLogActionItemId, { progress: progressLogPct });
+      if (currentUser) {
+        const explicitNote = `[Advanced to ${isDone ? 'Done' : progressLogPct + '%'}] ${formNote.trim()}`;
+        await addThreadMessage(progressLogActionItemId, currentUser.id, explicitNote);
+      }
+    } else {
+      await updateTask(progressLogTaskId, { progress: progressLogPct, status: isDone ? 'done' : (progressLogPct === 0 ? 'todo' : 'active') });
+      if (currentUser) {
+        const explicitNote = `[Advanced to ${isDone ? 'Done' : progressLogPct + '%'}] ${formNote.trim()}`;
+        await addTaskUpdate(progressLogTaskId, currentUser.id, explicitNote);
+      }
     }
     
     setModalType(null);
     setFormNote('');
     setProgressLogTaskId('');
+    setProgressLogActionItemId('');
     setProgressLogPct(0);
   };
 
@@ -513,8 +521,15 @@ export function Dashboard() {
                   onReorderTasks={handleReorderTasks}
                   onReorderUpdates={handleReorderUpdates}
                   onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
+                  onActionItemProgressClick={(updateId, taskId, pct) => {
+                    setProgressLogActionItemId(updateId);
+                    setProgressLogTaskId(taskId);
+                    setProgressLogPct(pct);
+                    setModalType('progress-log');
+                  }}
                   onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                   onProgressClick={(taskId, pct) => {
+                    setProgressLogActionItemId('');
                     setProgressLogTaskId(taskId);
                     setProgressLogPct(pct);
                     setModalType('progress-log');
@@ -641,8 +656,15 @@ export function Dashboard() {
                         onReorderTasks={handleReorderTasks}
                         onReorderUpdates={handleReorderUpdates}
                         onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
+                        onActionItemProgressClick={(updateId, taskId, pct) => {
+                          setProgressLogActionItemId(updateId);
+                          setProgressLogTaskId(taskId);
+                          setProgressLogPct(pct);
+                          setModalType('progress-log');
+                        }}
                         onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                         onProgressClick={(taskId, pct) => {
+                          setProgressLogActionItemId('');
                           setProgressLogTaskId(taskId);
                           setProgressLogPct(pct);
                           setModalType('progress-log');
@@ -769,8 +791,15 @@ export function Dashboard() {
                     onReorderTasks={handleReorderTasks}
                     onReorderUpdates={handleReorderUpdates}
                     onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
+                    onActionItemProgressClick={(updateId, taskId, pct) => {
+                      setProgressLogActionItemId(updateId);
+                      setProgressLogTaskId(taskId);
+                      setProgressLogPct(pct);
+                      setModalType('progress-log');
+                    }}
                     onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                     onProgressClick={(taskId, pct) => {
+                      setProgressLogActionItemId('');
                       setProgressLogTaskId(taskId);
                       setProgressLogPct(pct);
                       setModalType('progress-log');

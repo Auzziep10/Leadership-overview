@@ -65,6 +65,7 @@ interface TimelineCardProps {
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   onReorderUpdates?: (updates: { id: string, order_index: number }[]) => void;
   onUpdateActionItem?: (updateId: string, updates: Partial<TaskUpdate>) => void;
+  onActionItemProgressClick?: (updateId: string, taskId: string, pct: number) => void;
   onUpdateTask?: (taskId: string, updates: any) => void;
   onProgressClick?: (taskId: string, pct: number) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
@@ -96,6 +97,7 @@ export function TimelineCard({
   onReorderTasks,
   onReorderUpdates,
   onUpdateActionItem,
+  onActionItemProgressClick,
   onUpdateTask,
   onProgressClick,
   projects = [],
@@ -459,7 +461,11 @@ export function TimelineCard({
                                             key={pct}
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              onUpdateActionItem(n.id, { progress: pct });
+                                              if (onActionItemProgressClick) {
+                                                onActionItemProgressClick(n.id, task.id, pct);
+                                              } else {
+                                                onUpdateActionItem(n.id, { progress: pct });
+                                              }
                                             }}
                                             style={{
                                               fontSize: '9px',

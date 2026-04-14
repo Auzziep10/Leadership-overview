@@ -412,4 +412,25 @@ body {
     flex: 1;
     justify-content: center;
   }
+
+  /* Mobile Task Interactions */
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px;
+  }
+  
+  .task-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .task-header-actions > div {
+    flex: 1;
+    text-align: center;
+    padding: 8px 12px !important;
+    white-space: nowrap;
+  }
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
@@ -43,14 +43,24 @@ export function Dashboard() {
   const [formLeadCompany, setFormLeadCompany] = useState('');
   const [formLeadEmail, setFormLeadEmail] = useState('');
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async () => { /* deprecated, handled by snapshots */ };
+
+  useEffect(() => { 
+    if (!currentUser) return;
+    
     setLoading(true);
-    try {
-      let [u, p, t] = await Promise.all([fetchUsers(), fetchProjects(), fetchTasks()]);
-      
-      const isStaff = currentUser?.role === 'staff';
-      if (isStaff && currentUser) {
-        // Staff filter: Only see themselves and tasks/projects they are strictly assigned to
+    let allU: User[] = [];
+    let allP: Project[] = [];
+    let allT: Task[] = [];
+    let allUpd: TaskUpdate[] = [];
+
+    const processData = () => {
+      const isStaff = currentUser.role === 'staff';
+      let u = [...allU];
+      let p = [...allP];
+      let t = [...allT];
+
+      if (isStaff) {
         u = u.filter(user => user.id === currentUser.id);
         t = t.filter(task => task.assignees?.includes(currentUser.id));
         p = p.filter(proj => t.some(task => task.project_id === proj.id));
@@ -60,62 +70,52 @@ export function Dashboard() {
       setProjects(p);
       setTasks(t);
       
-      // Fetch updates for all active tasks
-      const allUpdates: TaskUpdate[] = [];
-      for (const task of t) {
-        const tUpdates = await fetchTaskUpdates(task.id);
-        allUpdates.push(...tUpdates);
-      }
-      setUpdates(allUpdates);
-
-      // Notification calculation
-      if (currentUser) {
-        const lastSeen = currentUser.last_seen_notifications || '2000-01-01T00:00:00Z';
-        let unreadCount = 0;
-        
-        t.forEach(task => { // New task assigned
-          if (task.assignees?.includes(currentUser.id) && task.created_at > lastSeen) unreadCount++;
-        });
-
-        allUpdates.forEach(upd => { // Updates or threads
-          const task = t.find(task => task.id === upd.task_id);
-          if (task && (task.assignees?.includes(currentUser.id) || currentUser.role === 'owner' || currentUser.role === 'admin')) {
-              // Note itself
-              if (upd.created_at > lastSeen && upd.author_id !== currentUser.id) unreadCount++;
-              // Threads
-              if (upd.thread) {
-                  upd.thread.forEach(msg => {
-                      if (msg.created_at > lastSeen && msg.author_id !== currentUser.id) unreadCount++;
-                  });
-              }
-              // Legacy Replies
-              if (upd.admin_reply && upd.admin_reply_by !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
-              if (upd.user_response && upd.author_id !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
-          }
-        });
-        window.dispatchEvent(new CustomEvent('update-notifications', { detail: unreadCount }));
-      }
+      const filteredUpdates = allUpd.filter(upd => t.some(task => task.id === upd.task_id))
+        .sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setUpdates(filteredUpdates);
 
-  useEffect(() => { 
-    loadDashboardData(); 
+      // Notification Calculation
+      const lastSeen = currentUser.last_seen_notifications || '2000-01-01T00:00:00Z';
+      let unreadCount = 0;
+      
+      t.forEach(task => { // New task assigned
+        if (task.assignees?.includes(currentUser.id) && task.created_at > lastSeen) unreadCount++;
+      });
+
+      filteredUpdates.forEach(upd => { // Updates or threads
+        const task = t.find(task => task.id === upd.task_id);
+        if (task && (task.assignees?.includes(currentUser.id) || currentUser.role === 'owner' || currentUser.role === 'admin')) {
+            if (upd.created_at > lastSeen && upd.author_id !== currentUser.id) unreadCount++;
+            if (upd.thread) {
+                upd.thread.forEach(msg => {
+                    if (msg.created_at > lastSeen && msg.author_id !== currentUser.id) unreadCount++;
+                });
+            }
+            if (upd.admin_reply && upd.admin_reply_by !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
+            if (upd.user_response && upd.author_id !== currentUser.id && upd.created_at > lastSeen) unreadCount++;
+        }
+      });
+      window.dispatchEvent(new CustomEvent('update-notifications', { detail: unreadCount }));
+      setLoading(false);
+    };
+
+    const unsubU = subscribeToUsers((data) => { allU = data; processData(); });
+    const unsubP = subscribeToProjects((data) => { allP = data; processData(); });
+    const unsubT = subscribeToTasks((data) => { allT = data; processData(); });
+    const unsubUpd = subscribeToAllTaskUpdates((data) => { allUpd = data; processData(); });
     
     // Listen for TopNav calls
     const handleOpenProject = () => setModalType('project');
     const handleSearch = (e: any) => setSearchQuery(e.detail);
-    const handleClearing = () => loadDashboardData();
+    const handleClearing = () => { /* wait for snapshot loop check */ };
     
     window.addEventListener('open-create-project', handleOpenProject);
     window.addEventListener('global-search', handleSearch);
     window.addEventListener('notifications-cleared', handleClearing);
     
     return () => {
+      unsubU(); unsubP(); unsubT(); unsubUpd();
       window.removeEventListener('open-create-project', handleOpenProject);
       window.removeEventListener('global-search', handleSearch);
       window.removeEventListener('notifications-cleared', handleClearing);

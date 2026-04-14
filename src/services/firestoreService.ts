@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
 import { db, firebaseConfig } from './firebaseConfig';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
@@ -38,6 +38,12 @@ export const fetchUsers = async (): Promise<User[]> => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
 };
 
+export const subscribeToUsers = (cb: (users: User[]) => void) => {
+  return onSnapshot(collection(db, 'users'), (snap) => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as User)));
+  });
+};
+
 export const updateUserRoleAndHierarchy = async (userId: string, role_id: string, reports_to: string | null, systemRole?: string) => {
   const updates: any = { 
     role_id: role_id || null, 
@@ -74,6 +80,12 @@ export const updateUserAvatar = async (userId: string, avatarDataUrl: string) =>
 export const fetchProjects = async (): Promise<Project[]> => {
   const snap = await getDocs(collection(db, 'projects'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Project));
+};
+
+export const subscribeToProjects = (cb: (projects: Project[]) => void) => {
+  return onSnapshot(collection(db, 'projects'), (snap) => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Project)));
+  });
 };
 
 export const createProject = async (title: string, description: string, end_date?: string) => {
@@ -124,6 +136,12 @@ export const fetchTasks = async (): Promise<Task[]> => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Task));
 };
 
+export const subscribeToTasks = (cb: (tasks: Task[]) => void) => {
+  return onSnapshot(collection(db, 'tasks'), (snap) => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Task)));
+  });
+};
+
 export const createTask = async (projectId: string, title: string, assignees: string[], due_date?: string, details?: string, status: string = 'todo') => {
   const docRef = await addDoc(collection(db, 'tasks'), {
     project_id: projectId,
@@ -153,6 +171,12 @@ export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> =>
   const q = query(collection(db, 'task_updates'), where('task_id', '==', taskId));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+};
+
+export const subscribeToAllTaskUpdates = (cb: (updates: TaskUpdate[]) => void) => {
+  return onSnapshot(collection(db, 'task_updates'), (snap) => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)));
+  });
 };
 
 export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean) => {

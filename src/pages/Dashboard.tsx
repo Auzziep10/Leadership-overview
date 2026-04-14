@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, updateTaskUpdateOrders, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
@@ -512,6 +512,7 @@ export function Dashboard() {
                   onLogUpdateClick={openTaskUpdateModal}
                   onReorderTasks={handleReorderTasks}
                   onReorderUpdates={handleReorderUpdates}
+                  onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
                   onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                   onProgressClick={(taskId, pct) => {
                     setProgressLogTaskId(taskId);
@@ -639,6 +640,7 @@ export function Dashboard() {
                         onLogUpdateClick={openTaskUpdateModal}
                         onReorderTasks={handleReorderTasks}
                         onReorderUpdates={handleReorderUpdates}
+                        onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
                         onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                         onProgressClick={(taskId, pct) => {
                           setProgressLogTaskId(taskId);
@@ -766,6 +768,7 @@ export function Dashboard() {
                     onLogUpdateClick={openTaskUpdateModal}
                     onReorderTasks={handleReorderTasks}
                     onReorderUpdates={handleReorderUpdates}
+                    onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
                     onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                     onProgressClick={(taskId, pct) => {
                       setProgressLogTaskId(taskId);

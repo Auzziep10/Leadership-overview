@@ -187,6 +187,10 @@ export const updateTaskUpdateOrders = async (reorderedUpdates: { id: string, ord
   await batch.commit();
 };
 
+export const updateTaskUpdate = async (updateId: string, updates: Partial<any>) => {
+  await updateDoc(doc(db, 'task_updates', updateId), updates);
+};
+
 export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> => {
   const q = query(collection(db, 'task_updates'), where('task_id', '==', taskId));
   const snap = await getDocs(q);

@@ -64,6 +64,7 @@ interface TimelineCardProps {
   onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   onReorderUpdates?: (updates: { id: string, order_index: number }[]) => void;
+  onUpdateActionItem?: (updateId: string, updates: Partial<TaskUpdate>) => void;
   onUpdateTask?: (taskId: string, updates: any) => void;
   onProgressClick?: (taskId: string, pct: number) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
@@ -94,6 +95,7 @@ export function TimelineCard({
   onLogUpdateClick,
   onReorderTasks,
   onReorderUpdates,
+  onUpdateActionItem,
   onUpdateTask,
   onProgressClick,
   projects = [],
@@ -447,8 +449,40 @@ export function TimelineCard({
                                   <div style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px' }}>
                                     {n.is_action_item ? `🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
                                   </div>
-                                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
-                                    {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {n.is_action_item && onUpdateActionItem && (
+                                      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '2px', background: 'var(--color-zinc-100)', padding: '2px', borderRadius: '6px' }}>
+                                        {[0, 25, 50, 75, 100].map(pct => {
+                                          const isActive = n.progress === pct || (pct === 0 && !n.progress);
+                                          return (
+                                          <button
+                                            key={pct}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onUpdateActionItem(n.id, { progress: pct });
+                                            }}
+                                            style={{
+                                              fontSize: '9px',
+                                              fontWeight: 700,
+                                              color: isActive ? 'white' : 'var(--color-zinc-500)',
+                                              background: isActive 
+                                                ? (pct === 100 ? 'var(--color-zinc-900)' : 'var(--color-zinc-700)') 
+                                                : 'transparent',
+                                              border: 'none',
+                                              borderRadius: '4px',
+                                              padding: '4px 6px',
+                                              cursor: 'pointer',
+                                              transition: 'all 0.2s',
+                                            }}
+                                          >
+                                            {pct === 100 ? 'Done' : `${pct}%`}
+                                          </button>
+                                        )})}
+                                      </div>
+                                    )}
+                                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
+                                      {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                                    </div>
                                   </div>
                                 </div>
                                 

@@ -76,5 +76,6 @@ export interface TaskUpdate {
   admin_reply_by?: string;
   user_response?: string;
   order_index?: number;
+  progress?: number;
   thread?: ThreadMessage[];
 }

@@ -576,7 +576,6 @@ export function Dashboard() {
                 <button onClick={() => setProjectViewType('list')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'list' ? 'white' : 'transparent', color: projectViewType === 'list' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>List View</button>
                 <button onClick={() => setProjectViewType('grid')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'grid' ? 'white' : 'transparent', color: projectViewType === 'grid' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Grid View</button>
               </div>
-              </div>
               {!isStaff && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => setShowArchives(!showArchives)} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: showArchives ? 'var(--color-zinc-900)' : 'transparent', color: showArchives ? 'white' : 'var(--color-zinc-500)', border: showArchives ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>{showArchives ? 'Hide Archives' : 'Data Archives'}</button>

@@ -237,13 +237,17 @@ export const respondToAdminReply = async (updateId: string, response: string) =>
   });
 };
 
-export const addThreadMessage = async (updateId: string, authorId: string, message: string) => {
-  const newMessage = {
+export const addThreadMessage = async (updateId: string, authorId: string, message: string, replyToId?: string) => {
+  const newMessage: any = {
     id: Math.random().toString(36).substring(2, 11),
     author_id: authorId,
     message,
     created_at: new Date().toISOString()
   };
+  if (replyToId) {
+    newMessage.reply_to_id = replyToId;
+  }
+  
   await updateDoc(doc(db, 'task_updates', updateId), {
     thread: arrayUnion(newMessage)
   });

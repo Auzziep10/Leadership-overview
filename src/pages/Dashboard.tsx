@@ -32,6 +32,7 @@ export function Dashboard() {
   const [updatesListItems, setUpdatesListItems] = useState<TaskUpdate[]>([]);
   const [activeUpdateId, setActiveUpdateId] = useState<string>('');
   const [activeTaskId, setActiveTaskId] = useState<string>('');
+  const [replyToMsgId, setReplyToMsgId] = useState<string>('');
   
   // Form State
   const [formTitle, setFormTitle] = useState('');
@@ -240,9 +241,10 @@ export function Dashboard() {
     e.preventDefault();
     if (currentUser) {
       const payload = modalType === 'action-item-log' ? `[LOG] ${formReply}` : formReply;
-      await addThreadMessage(activeUpdateId, currentUser.id, payload);
+      await addThreadMessage(activeUpdateId, currentUser.id, payload, replyToMsgId);
       setModalType(null);
       setFormReply('');
+      setReplyToMsgId('');
       loadDashboardData();
     }
   };
@@ -343,9 +345,10 @@ export function Dashboard() {
     setModalType('update');
   };
 
-  const openReplyModal = (updateId: string, initialText?: string) => {
+  const openReplyModal = (updateId: string, initialText?: string, targetMsgId?: string) => {
     setActiveUpdateId(updateId);
     setFormReply(initialText || '');
+    setReplyToMsgId(targetMsgId || '');
     setModalType('reply-update');
   };
 
@@ -1052,7 +1055,7 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      <Modal isOpen={modalType === 'reply-update' || modalType === 'action-item-log'} onClose={() => setModalType(null)} title={modalType === 'action-item-log' ? 'Log Update to Action Item' : 'Add Thread Message'}>
+      <Modal isOpen={modalType === 'reply-update' || modalType === 'action-item-log'} onClose={() => { setModalType(null); setReplyToMsgId(''); }} title={modalType === 'action-item-log' ? 'Log Update to Action Item' : 'Add Thread Message'}>
         <form onSubmit={submitReply} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>Your message will be appended to this log's active timeline thread.</div>
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />

@@ -500,10 +500,35 @@ export function TimelineCard({
                                   
                                   {messages.length > 0 && (
                                     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column' }}>
-                                      {messages.map((msg, idx) => {
-                                        const mAuthorObj = users.find(u => u.id === msg.author_id);
-                                        const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
-                                        return (
+                                      {(() => {
+                                        const map = new Map();
+                                        messages.forEach(m => map.set(m.id, { ...m, children: [] }));
+                                        const roots: any[] = [];
+                                        messages.forEach(m => {
+                                          if ((m as any).reply_to_id && map.has((m as any).reply_to_id)) {
+                                            map.get((m as any).reply_to_id).children.push(map.get(m.id));
+                                          } else {
+                                            roots.push(map.get(m.id));
+                                          }
+                                        });
+                                        
+                                        const flattenTree = (nodes: any[], depth = 0): any[] => {
+                                          let flat: any[] = [];
+                                          nodes.forEach(n => {
+                                            flat.push({ ...n, depth });
+                                            if (n.children && n.children.length > 0) {
+                                              flat = flat.concat(flattenTree(n.children, depth + 1));
+                                            }
+                                          });
+                                          return flat;
+                                        };
+                                        
+                                        const structuredMessages = flattenTree(roots);
+                                        
+                                        return structuredMessages.map((msg, idx) => {
+                                          const mAuthorObj = users.find(u => u.id === msg.author_id);
+                                          const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
+                                          return (
                                           <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-100)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
                                             {(() => {
                                               const isProgressUpdate = msg.message.startsWith('[Advanced to');
@@ -522,10 +547,12 @@ export function TimelineCard({
                                               }
                                               
                                               const isConversationalReply = !isProgressUpdate && !isExplicitLog;
-                                              
+                                              const depth = (msg as any).depth || 0;
+                                              const dynamicMargin = depth > 0 ? `${(depth * 12) + (isConversationalReply ? 12 : 0)}px` : (isConversationalReply ? '12px' : '0');
+
                                               return (
                                                 <div style={{ 
-                                                  marginLeft: isConversationalReply ? '12px' : '0', 
+                                                  marginLeft: dynamicMargin, 
                                                   paddingLeft: isConversationalReply ? '12px' : '0', 
                                                   borderLeft: isConversationalReply ? `3px solid ${color}` : 'none' 
                                                 }}>
@@ -541,7 +568,7 @@ export function TimelineCard({
                                                     
                                                     {onReplyClick && (
                                                       <button 
-                                                        onClick={() => onReplyClick(n.id, `@${mAuthorName.split(' ')[0]} `)} 
+                                                        onClick={() => onReplyClick(n.id, `@${mAuthorName.split(' ')[0]} `, msg.id)} 
                                                         style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}
                                                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-zinc-700)'}
                                                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-zinc-400)'}
@@ -556,7 +583,7 @@ export function TimelineCard({
                                             })()}
                                           </div>
                                         );
-                                      })}
+                                      })})()}
 
                                       {onReplyClick && canReply && (
                                         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>

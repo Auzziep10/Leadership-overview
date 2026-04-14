@@ -499,12 +499,12 @@ export function TimelineCard({
                                 </div>
                                   
                                   {messages.length > 0 && (
-                                    <div style={{ marginTop: '8px', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '8px', borderLeft: `3px solid ${color}` }}>
+                                    <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column' }}>
                                       {messages.map((msg, idx) => {
                                         const mAuthorObj = users.find(u => u.id === msg.author_id);
                                         const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
                                         return (
-                                          <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
+                                          <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-100)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
                                             {(() => {
                                               const isProgressUpdate = msg.message.startsWith('[Advanced to');
                                               const isExplicitLog = msg.message.startsWith('[LOG] ');
@@ -525,9 +525,9 @@ export function TimelineCard({
                                               
                                               return (
                                                 <div style={{ 
-                                                  marginLeft: isConversationalReply ? '16px' : '0', 
+                                                  marginLeft: isConversationalReply ? '12px' : '0', 
                                                   paddingLeft: isConversationalReply ? '12px' : '0', 
-                                                  borderLeft: isConversationalReply ? '2px solid var(--color-zinc-200)' : 'none' 
+                                                  borderLeft: isConversationalReply ? `3px solid ${color}` : 'none' 
                                                 }}>
                                                   <strong style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -559,7 +559,7 @@ export function TimelineCard({
                                       })}
 
                                       {onReplyClick && canReply && (
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                                           <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
                                             + Add Thread Message
                                           </button>

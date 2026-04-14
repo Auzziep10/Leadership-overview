@@ -263,33 +263,12 @@ export function TopNav() {
   };
 
   const [baking, setBaking] = useState(false);
+  const [readyCompositeUrl, setReadyCompositeUrl] = useState<string | null>(null);
 
-  const copySignature = async () => {
+  const startBake = async () => {
     if (!user) return;
-    // Pre-emptively load the native layout proxy strictly synchronously out-of-band to dodge Apple's blocking pattern
-    try {
-      const fallbackHtml = generateSignatureHTML();
-      const div = document.createElement('div');
-      div.innerHTML = fallbackHtml;
-      div.style.position = 'absolute';
-      div.style.left = '-9999px';
-      div.style.opacity = '0';
-      document.body.appendChild(div);
-      
-      const selection = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(div);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-      
-      document.execCommand('copy');
-      
-      selection?.removeAllRanges();
-      document.body.removeChild(div);
-    } catch(e) { }
-
     setBaking(true);
-    
+
     try {
       const bUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
       const aUrl = sigProfileUrl || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile';
@@ -340,38 +319,65 @@ export function TopNav() {
       ctx.drawImage(aImg, ax, ay, asize, asize);
       ctx.restore();
 
-      const bakeJob = async () => {
-        const bakedBase64 = canvas.toDataURL('image/png', 1.0);
-        const compositeUrl = await uploadSignatureAsset(bakedBase64);
-        const html = generateSignatureHTML(compositeUrl);
-        return new Blob([html], { type: 'text/html' });
-      };
-
-      try {
-        // Safari/WebKit requires the promise to be passed directly to lock the user-gesture tick synchronously
-        const item = new window.ClipboardItem({ 'text/html': bakeJob() });
-        await navigator.clipboard.write([item]);
-        alert('High-fidelity signature copied to clipboard! Open your Gmail or Outlook settings and hit paste to install.');
-      } catch (err) {
-        try {
-          // Firefox/Chrome rejects the Promise format above, so use strict Blob resolution
-          const blob = await bakeJob();
-          const item = new window.ClipboardItem({ 'text/html': blob });
-          await navigator.clipboard.write([item]);
-          alert('High-fidelity signature copied to clipboard globally! Open your Gmail or Outlook settings and hit paste to install.');
-        } catch (fbErr) {
-          const fallbackHtml = generateSignatureHTML();
-          const fallbackBlob = new Blob([fallbackHtml], { type: 'text/html' });
-          await navigator.clipboard.write([new window.ClipboardItem({ 'text/html': fallbackBlob })]);
-          alert('Signature copied fallback! (Note: Used layout fallback because primary composite was blocked contextually)');
-        }
-      }
+      const bakedBase64 = canvas.toDataURL('image/png', 1.0);
+      const compositeUrl = await uploadSignatureAsset(bakedBase64);
+      setReadyCompositeUrl(compositeUrl);
     } catch(err) {
       console.error(err);
-      alert("Signature copied! (Note: Using local offline clipboard access because you are testing without an HTTPS certificate)");
+      setReadyCompositeUrl('fallback');
     } finally {
       setBaking(false);
     }
+  };
+
+  const executeSyncCopy = () => {
+    let finalHtml = '';
+    if (readyCompositeUrl === 'fallback') {
+      finalHtml = generateSignatureHTML();
+    } else {
+      finalHtml = generateSignatureHTML(readyCompositeUrl || undefined);
+    }
+
+    try {
+      const fallbackDiv = () => {
+        const div = document.createElement('div');
+        div.innerHTML = finalHtml;
+        div.style.position = 'absolute';
+        div.style.left = '-9999px';
+        div.style.opacity = '0';
+        document.body.appendChild(div);
+        
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(div);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        document.execCommand('copy');
+        
+        selection?.removeAllRanges();
+        document.body.removeChild(div);
+      };
+
+      if (navigator?.clipboard?.write && window.ClipboardItem) {
+        try {
+          const blob = new Blob([finalHtml], { type: 'text/html' });
+          navigator.clipboard.write([new window.ClipboardItem({ 'text/html': blob })]).catch(() => {
+            fallbackDiv();
+          });
+        } catch(e) {
+          fallbackDiv();
+        }
+      } else {
+        fallbackDiv();
+      }
+      
+      alert(readyCompositeUrl !== 'fallback' ? "High-Fidelity Signature perfectly injected into your clipboard! Press Cmd+V in Gmail to install." : "Signature safely copied natively (Fallback structural CSS layout applied).");
+    } catch(e) {
+       alert("Clipboard strictly disabled locally.");
+    }
+    
+    setReadyCompositeUrl(null);
   };
 
   const generateSignatureHTML = (bakedCompositeUrl?: string) => {
@@ -382,7 +388,7 @@ export function TopNav() {
 
     
     return `
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 600px;">
   <tr>
     <td style="padding-bottom: 24px;">
       
@@ -390,9 +396,9 @@ export function TopNav() {
         <tr>
           <td valign="top">
             ${bakedCompositeUrl ? `
-            <img src="${bakedCompositeUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
+            <img src="${bakedCompositeUrl}" width="600" style="width: 100%; height: auto; max-width: 600px; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
             ` : `
-            <img src="${bannerUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
+            <img src="${bannerUrl}" width="600" style="width: 100%; height: auto; max-width: 600px; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                <tr>
                  <td width="48" style="width: 48px;"></td>
@@ -749,14 +755,24 @@ export function TopNav() {
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Live Preview</div>
                         <div style={{ fontSize: '11px', color: 'var(--color-zinc-500)' }}>What you see is what gets copied.</div>
                       </div>
-                      <button 
-                        onClick={copySignature}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: baking ? 0.7 : 1 }}
-                        disabled={baking}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        {baking ? 'Baking Native Sig...' : 'Copy Signature'}
-                      </button>
+                      {!readyCompositeUrl ? (
+                        <button 
+                          onClick={startBake}
+                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: baking ? 0.7 : 1 }}
+                          disabled={baking}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                          {baking ? 'Preparing High-Fidelity Signature...' : 'Generate New Signature'}
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={executeSyncCopy}
+                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#22c55e', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                          Confirm & Copy to Clipboard
+                        </button>
+                      )}
                     </div>
 
                     <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', justifyContent: 'flex-start', overflowX: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>

@@ -8,7 +8,7 @@ import { useAuth } from '../services/AuthContext';
 export function Dashboard() {
   const { user: currentUser } = useAuth();
   const [view, setView] = useState<'team' | 'projects' | 'leads' | 'metrics' | 'archives' | 'pulse'>('team');
-  const [projectViewType, setProjectViewType] = useState<'list' | 'grid'>('grid');
+  const [projectViewType, setProjectViewType] = useState<'list' | 'grid'>('list');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);

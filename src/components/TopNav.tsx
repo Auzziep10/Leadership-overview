@@ -445,12 +445,12 @@ export function TopNav() {
                  </td>
                  <td style="padding-right: 8px;">
                    <a href="${sigLinkedin}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Flinkedin.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="LinkedIn" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fglobe.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="LinkedIn" />
                    </a>
                  </td>
                  <td>
                    <a href="${sigWebsite}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fglobe.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Web" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Flinkedin.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Web" />
                    </a>
                  </td>
                </tr>

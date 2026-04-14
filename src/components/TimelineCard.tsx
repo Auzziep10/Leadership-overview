@@ -24,6 +24,24 @@ const SortableTaskWrapper = ({ id, children }: { id: string, children: React.Rea
   );
 };
 
+const SortableActionItemWrapper = ({ id, children }: { id: string, children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 0,
+    position: isDragging ? ('relative' as const) : ('static' as const),
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+};
+
 interface TimelineCardProps {
   title: string;
   subtitle: string;
@@ -45,6 +63,7 @@ interface TimelineCardProps {
   onActionItem?: (task: any) => void;
   onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
+  onReorderUpdates?: (updates: { id: string, order_index: number }[]) => void;
   onUpdateTask?: (taskId: string, updates: any) => void;
   onProgressClick?: (taskId: string, pct: number) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
@@ -74,6 +93,7 @@ export function TimelineCard({
   onActionItem,
   onLogUpdateClick,
   onReorderTasks,
+  onReorderUpdates,
   onUpdateTask,
   onProgressClick,
   projects = [],
@@ -86,11 +106,19 @@ export function TimelineCard({
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localTasks, setLocalTasks] = useState(assignedTasks || []);
+  const [localUpdates, setLocalUpdates] = useState(updates || []);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setLocalTasks([...(assignedTasks || [])].sort((a,b) => (a.order_index || 0) - (b.order_index || 0)));
   }, [assignedTasks]);
+
+  useEffect(() => {
+    setLocalUpdates([...(updates || [])].sort((a,b) => {
+      if (a.order_index !== undefined && b.order_index !== undefined) return a.order_index - b.order_index;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }));
+  }, [updates]);
 
   const toggleTask = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
@@ -104,15 +132,34 @@ export function TimelineCard({
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (active.id !== over?.id && over?.id) {
-       setLocalTasks((items) => {
-         const oldIndex = items.findIndex(t => t.id === active.id);
-         const newIndex = items.findIndex(t => t.id === over.id);
-         const newOrder = arrayMove(items, oldIndex, newIndex);
-         if (onReorderTasks) {
-           onReorderTasks(newOrder.map((t, idx) => ({ id: t.id, order_index: idx })));
-         }
-         return newOrder;
-       });
+       // Is this active id a Task?
+       if (localTasks.some(t => t.id === active.id)) {
+           setLocalTasks((items) => {
+             const oldIndex = items.findIndex(t => t.id === active.id);
+             const newIndex = items.findIndex(t => t.id === over.id);
+             const newOrder = arrayMove(items, oldIndex, newIndex);
+             if (onReorderTasks) {
+               onReorderTasks(newOrder.map((t, idx) => ({ id: t.id, order_index: idx })));
+             }
+             return newOrder;
+           });
+       } else {
+           // It must be an action item (TaskUpdate). Let's fetch it from localUpdates.
+           setLocalUpdates((items) => {
+             const subject = items.find(u => u.id === active.id);
+             if (!subject) return items;
+             const oldIndex = items.findIndex(u => u.id === active.id);
+             const newIndex = items.findIndex(u => u.id === over.id);
+             const newOrder = arrayMove(items, oldIndex, newIndex);
+             
+             // Extract specifically the task's action items so we only sequence them in order internally
+             const groupSort = newOrder.filter(u => u.task_id === subject.task_id && u.is_action_item);
+             if (onReorderUpdates) {
+               onReorderUpdates(groupSort.map((u, idx) => ({ id: u.id, order_index: idx })));
+             }
+             return newOrder;
+           });
+       }
     }
   };
 
@@ -382,76 +429,105 @@ export function TimelineCard({
                       {taskNodes.length === 0 ? (
                         <div style={{ fontSize: '12px', color: 'var(--color-zinc-400)', fontStyle: 'italic', textAlign: 'center', padding: '16px', background: 'white', borderRadius: '8px', border: '1px dashed var(--color-zinc-200)' }}>No timeline updates logged.</div>
                       ) : (
-                        taskNodes.map(n => {
-                        const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
-                        const messages = [...(n.thread || [])];
-                        if (!n.thread && n.admin_reply) {
-                          messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
-                          if (n.user_response) {
-                            messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
-                          }
-                        }
-                        const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === n.author_id;
+                        (() => {
+                          const renderNodeItem = (n: TaskUpdate, isDraggable: boolean = false) => {
+                            const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
+                            const messages = [...(n.thread || [])];
+                            if (!n.thread && n.admin_reply) {
+                              messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
+                              if (n.user_response) {
+                                messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
+                              }
+                            }
+                            const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === n.author_id;
 
-                        return (
-                          <div key={n.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                              <div style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px' }}>
-                                {n.is_action_item ? `🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
-                              </div>
-                              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
-                                {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
-                              </div>
-                            </div>
-                            
-                            <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 500 : 400, marginTop: '4px', lineHeight: '1.5' }}>
-                              {n.note}
-                            </div>
-                              
-                              {messages.length > 0 && (
-                                <div style={{ marginTop: '8px', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '8px', borderLeft: `3px solid ${color}` }}>
-                                  {messages.map((msg, idx) => {
-                                    const mAuthorObj = users.find(u => u.id === msg.author_id);
-                                    const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
-                                    return (
-                                      <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
-                                        <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
-                                          {mAuthorName} Replied:
-                                        </strong>
-                                        {msg.message}
-                                      </div>
-                                    );
-                                  })}
+                            const content = (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)', cursor: isDraggable ? 'grab' : 'default' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                                  <div style={{ fontSize: '10px', color: n.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', textTransform: 'uppercase', fontWeight: n.is_action_item ? 800 : 600, letterSpacing: '0.05em', background: n.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-100)', padding: '4px 8px', borderRadius: '4px' }}>
+                                    {n.is_action_item ? `🚨 ACTION ITEM BY ${authorName}` : `Logged by ${authorName}`}
+                                  </div>
+                                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
+                                    {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
+                                  </div>
+                                </div>
+                                
+                                <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 500 : 400, marginTop: '4px', lineHeight: '1.5' }}>
+                                  {n.note}
+                                </div>
+                                  
+                                  {messages.length > 0 && (
+                                    <div style={{ marginTop: '8px', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '8px', borderLeft: `3px solid ${color}` }}>
+                                      {messages.map((msg, idx) => {
+                                        const mAuthorObj = users.find(u => u.id === msg.author_id);
+                                        const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
+                                        return (
+                                          <div key={msg.id} style={{ marginTop: idx > 0 ? '12px' : '0', paddingTop: idx > 0 ? '12px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none', fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.5' }}>
+                                            <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
+                                              {mAuthorName} Replied:
+                                            </strong>
+                                            {msg.message}
+                                          </div>
+                                        );
+                                      })}
 
-                                  {onReplyClick && canReply && (
-                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                      <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                        + Add Reply
+                                      {onReplyClick && canReply && (
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                          <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                            + Add Reply
+                                          </button>
+                                          {n.is_action_item && onLogUpdateClick && (
+                                            <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '6px', cursor: 'pointer', padding: '5px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                              + Add Log to Action Item
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {onReplyClick && canReply && messages.length === 0 && (
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                      <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
+                                        + Add Thread Message
                                       </button>
                                       {n.is_action_item && onLogUpdateClick && (
-                                        <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: color, background: 'transparent', border: `1px solid ${color}`, borderRadius: '6px', cursor: 'pointer', padding: '5px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
+                                        <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
                                           + Add Log to Action Item
                                         </button>
                                       )}
                                     </div>
                                   )}
+                              </div>
+                            );
+
+                            if (isDraggable) {
+                              return <SortableActionItemWrapper key={n.id} id={n.id}>{content}</SortableActionItemWrapper>;
+                            }
+                            return <div key={n.id}>{content}</div>;
+                          };
+
+                          const actionItems = taskNodes.filter(n => n.is_action_item);
+                          const logItems = taskNodes.filter(n => !n.is_action_item);
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                              {actionItems.length > 0 && (
+                                <SortableContext items={actionItems.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {actionItems.map(n => renderNodeItem(n, true))}
+                                  </div>
+                                </SortableContext>
+                              )}
+                              
+                              {logItems.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {logItems.map(n => renderNodeItem(n, false))}
                                 </div>
                               )}
-                              {onReplyClick && canReply && messages.length === 0 && (
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                  <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
-                                    + Add Thread Message
-                                  </button>
-                                  {n.is_action_item && onLogUpdateClick && (
-                                    <button onClick={() => onLogUpdateClick(task.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)', background: 'transparent', border: '1px solid var(--color-zinc-300)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
-                                      + Add Log to Action Item
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                          </div>
-                        );
-                      })
+                            </div>
+                          );
+                        })()
                       )}
                       {onLogUpdateClick && (
                         <button 

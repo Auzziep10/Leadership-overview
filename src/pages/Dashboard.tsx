@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, updateTaskUpdateOrders, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
@@ -209,6 +209,11 @@ export function Dashboard() {
     await updateTaskOrders(reorderedTasks);
     // Note: We immediately request a reload from DB so changes echo correctly.
     // However, TimelineCard caches the list visually already.
+    loadDashboardData();
+  };
+
+  const handleReorderUpdates = async (reorderedUpdates: { id: string, order_index: number }[]) => {
+    await updateTaskUpdateOrders(reorderedUpdates);
     loadDashboardData();
   };
 
@@ -506,6 +511,7 @@ export function Dashboard() {
                   onActionItem={openActionItemModal}
                   onLogUpdateClick={openTaskUpdateModal}
                   onReorderTasks={handleReorderTasks}
+                  onReorderUpdates={handleReorderUpdates}
                   onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                   onProgressClick={(taskId, pct) => {
                     setProgressLogTaskId(taskId);
@@ -632,6 +638,7 @@ export function Dashboard() {
                         onActionItem={openActionItemModal}
                         onLogUpdateClick={openTaskUpdateModal}
                         onReorderTasks={handleReorderTasks}
+                        onReorderUpdates={handleReorderUpdates}
                         onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                         onProgressClick={(taskId, pct) => {
                           setProgressLogTaskId(taskId);
@@ -758,6 +765,7 @@ export function Dashboard() {
                     onActionItem={openActionItemModal}
                     onLogUpdateClick={openTaskUpdateModal}
                     onReorderTasks={handleReorderTasks}
+                    onReorderUpdates={handleReorderUpdates}
                     onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
                     onProgressClick={(taskId, pct) => {
                       setProgressLogTaskId(taskId);

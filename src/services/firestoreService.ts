@@ -179,15 +179,33 @@ export const updateTaskOrders = async (reorderedTasks: { id: string, order_index
   await batch.commit();
 };
 
+export const updateTaskUpdateOrders = async (reorderedUpdates: { id: string, order_index: number }[]) => {
+  const batch = writeBatch(db);
+  for (const update of reorderedUpdates) {
+    batch.update(doc(db, 'task_updates', update.id), { order_index: update.order_index });
+  }
+  await batch.commit();
+};
+
 export const fetchTaskUpdates = async (taskId: string): Promise<TaskUpdate[]> => {
   const q = query(collection(db, 'task_updates'), where('task_id', '==', taskId));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)).sort((a,b) => {
+    if (a.order_index !== undefined && b.order_index !== undefined) {
+      return a.order_index - b.order_index;
+    }
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
 };
 
 export const subscribeToAllTaskUpdates = (cb: (updates: TaskUpdate[]) => void) => {
   return onSnapshot(collection(db, 'task_updates'), (snap) => {
-    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)));
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskUpdate)).sort((a,b) => {
+      if (a.order_index !== undefined && b.order_index !== undefined) {
+        return a.order_index - b.order_index;
+      }
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }));
   });
 };
 

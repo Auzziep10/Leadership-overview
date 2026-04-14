@@ -277,11 +277,22 @@ export function TopNav() {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Canvas context failed");
 
-      const loadImg = (u: string) => new Promise<HTMLImageElement>((res, rej) => {
+      const loadImg = (u: string) => new Promise<HTMLImageElement>((res) => {
+        if (!u || u.includes('placehold.co')) {
+           const tempC = document.createElement('canvas'); tempC.width=10; tempC.height=10; 
+           const tempCtx = tempC.getContext('2d'); if(tempCtx){ tempCtx.fillStyle='#e4e4e7'; tempCtx.fillRect(0,0,10,10); }
+           const i = new Image(); i.onload = () => res(i); i.src = tempC.toDataURL();
+           return;
+        }
         const i = new Image();
         i.crossOrigin = "anonymous";
         i.onload = () => res(i);
-        i.onerror = () => rej(u);
+        i.onerror = () => {
+           console.warn('Image signature composite fail, bypassing tainted CORS:', u);
+           const tempC = document.createElement('canvas'); tempC.width=10; tempC.height=10; 
+           const tempCtx = tempC.getContext('2d'); if(tempCtx){ tempCtx.fillStyle='#e4e4e7'; tempCtx.fillRect(0,0,10,10); }
+           const fb = new Image(); fb.onload = () => res(fb); fb.src = tempC.toDataURL();
+        };
         i.src = u;
       });
 

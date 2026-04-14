@@ -388,17 +388,17 @@ export function TopNav() {
 
     
     return `
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;">
+<table cellpadding="0" cellspacing="0" border="0" width="800" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; min-width: 800px; max-width: 800px;">
   <tr>
     <td style="padding-bottom: 24px;">
       
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%;">
+      <table cellpadding="0" cellspacing="0" border="0" width="800" style="width: 100%; min-width: 800px; max-width: 800px;">
         <tr>
           <td valign="top">
             ${bakedCompositeUrl ? `
-            <img src="${bakedCompositeUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
+            <img src="${bakedCompositeUrl}" width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
             ` : `
-            <img src="${bannerUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
+            <img src="${bannerUrl}" width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                <tr>
                  <td width="48" style="width: 48px;"></td>

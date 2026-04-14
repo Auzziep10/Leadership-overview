@@ -17,6 +17,8 @@ export function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<'avatar' | 'sigProfile' | 'sigBanner' | 'sigLogo'>('avatar');
+  const [cropAspect, setCropAspect] = useState(1);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
@@ -41,15 +43,7 @@ export function TopNav() {
   const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
   const [sigGlobalLogo, setSigGlobalLogo] = useState('');
 
-  const handleDirectFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) setter(event.target.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+
 
   useEffect(() => {
     if (user && isSettingsOpen) {
@@ -86,9 +80,15 @@ export function TopNav() {
     setCroppedAreaPixels(croppedAreaPx);
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'avatar' | 'sigProfile' | 'sigBanner' | 'sigLogo') => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (target === 'sigBanner') setCropAspect(3);
+    else if (target === 'sigLogo') setCropAspect(2);
+    else setCropAspect(1);
+
+    setCropTarget(target);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -104,21 +104,38 @@ export function TopNav() {
     const img = new Image();
     img.onload = async () => {
       const canvas = document.createElement('canvas');
-      canvas.width = 120;
-      canvas.height = 120;
+      
+      let tw = 120;
+      let th = 120;
+      if (cropTarget === 'sigBanner') { tw = 600; th = 200; }
+      else if (cropTarget === 'sigLogo') { tw = 200; th = 100; }
+      else if (cropTarget === 'sigProfile') { tw = 150; th = 150; }
+
+      canvas.width = tw;
+      canvas.height = th;
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(
            img, 
            croppedAreaPixels.x, croppedAreaPixels.y, croppedAreaPixels.width, croppedAreaPixels.height, 
-           0, 0, 120, 120
+           0, 0, tw, th
         );
         const dataUrl = canvas.toDataURL('image/webp', 0.8);
-        await updateUserAvatar(user.id, dataUrl);
+        
+        if (cropTarget === 'avatar') {
+          await updateUserAvatar(user.id, dataUrl);
+          setIsSettingsOpen(false);
+          window.location.reload(); 
+        } else if (cropTarget === 'sigProfile') {
+          setSigProfileUrl(dataUrl);
+        } else if (cropTarget === 'sigBanner') {
+          setSigGlobalBanner(dataUrl);
+        } else if (cropTarget === 'sigLogo') {
+          setSigGlobalLogo(dataUrl);
+        }
+
         setUploading(false);
         setImageSrc(null);
-        setIsSettingsOpen(false);
-        window.location.reload(); 
       }
     };
     img.src = imageSrc;
@@ -396,7 +413,7 @@ export function TopNav() {
                         <div style={{ display: 'flex', gap: '8px' }}>
                            <input type="text" value={sigProfileUrl} onChange={e => setSigProfileUrl(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
                            <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
-                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigProfileUrl)} />
+                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, 'sigProfile')} />
                              ↑
                            </label>
                         </div>
@@ -448,7 +465,7 @@ export function TopNav() {
                           <div style={{ display: 'flex', gap: '8px' }}>
                              <input type="text" value={sigGlobalBanner} onChange={e => setSigGlobalBanner(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
                              <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
-                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigGlobalBanner)} />
+                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, 'sigBanner')} />
                                ↑
                              </label>
                           </div>
@@ -458,7 +475,7 @@ export function TopNav() {
                           <div style={{ display: 'flex', gap: '8px' }}>
                              <input type="text" value={sigGlobalLogo} onChange={e => setSigGlobalLogo(e.target.value)} placeholder="Upload or link to override text..." style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
                              <label style={{ padding: '10px 14px', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', background: 'var(--color-zinc-50)', display: 'flex', alignItems: 'center' }}>
-                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleDirectFileUpload(e, setSigGlobalLogo)} />
+                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, 'sigLogo')} />
                                ↑
                              </label>
                           </div>

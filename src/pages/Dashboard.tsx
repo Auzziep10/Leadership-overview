@@ -20,6 +20,7 @@ export function Dashboard() {
 
   // Modal State
   const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'progress-log' | null>(null);
+  const [showArchives, setShowArchives] = useState(false);
   const [progressLogTaskId, setProgressLogTaskId] = useState('');
   const [progressLogPct, setProgressLogPct] = useState<number>(0);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
@@ -575,14 +576,18 @@ export function Dashboard() {
                 <button onClick={() => setProjectViewType('list')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'list' ? 'white' : 'transparent', color: projectViewType === 'list' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>List View</button>
                 <button onClick={() => setProjectViewType('grid')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'grid' ? 'white' : 'transparent', color: projectViewType === 'grid' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Grid View</button>
               </div>
+              </div>
               {!isStaff && (
-                <button 
-                  onClick={() => setModalType('project')}
-                  style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 20px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-zinc-100)'}>
-                  New Project +
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => setShowArchives(!showArchives)} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: showArchives ? 'var(--color-zinc-900)' : 'transparent', color: showArchives ? 'white' : 'var(--color-zinc-500)', border: showArchives ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>{showArchives ? 'Hide Archives' : 'Data Archives'}</button>
+                  <button 
+                    onClick={() => setModalType('project')}
+                    style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 20px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-zinc-100)'}>
+                    New Project +
+                  </button>
+                </div>
               )}
             </div>
             {projects.filter(p => p.status !== 'lead').length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
@@ -674,6 +679,38 @@ export function Dashboard() {
                 );
               })}
             </div>
+            
+            {showArchives && !isStaff && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '32px', paddingTop: '32px', borderTop: '2px dashed var(--color-zinc-200)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Projects</div>
+                  {archivedProjects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived projects.</div>}
+                  {archivedProjects.map(proj => (
+                    <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{proj.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(proj.created_at).toLocaleDateString()}</div>
+                      </div>
+                      <button onClick={() => restoreProject(proj.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Project</button>
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Tasks</div>
+                  {archivedTasks.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived tasks.</div>}
+                  {archivedTasks.map(task => (
+                    <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{task.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
+                      </div>
+                      <button onClick={() => restoreTask(task.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Task</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
         {view === 'leads' && currentUser?.role === 'owner' && (
@@ -733,37 +770,7 @@ export function Dashboard() {
             })}
           </>
         )}
-        {view === 'archives' && !isStaff && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Projects</div>
-              {archivedProjects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived projects.</div>}
-              {archivedProjects.map(proj => (
-                <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{proj.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(proj.created_at).toLocaleDateString()}</div>
-                  </div>
-                  <button onClick={() => restoreProject(proj.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Project</button>
-                </div>
-              ))}
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Tasks</div>
-              {archivedTasks.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived tasks.</div>}
-              {archivedTasks.map(task => (
-                <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{task.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
-                  </div>
-                  <button onClick={() => restoreTask(task.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Task</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
         {view === 'pulse' && !isStaff && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Global Activity Feed</div>

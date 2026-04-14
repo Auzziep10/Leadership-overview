@@ -343,8 +343,9 @@ export function Dashboard() {
     setModalType('update');
   };
 
-  const openReplyModal = (updateId: string) => {
+  const openReplyModal = (updateId: string, initialText?: string) => {
     setActiveUpdateId(updateId);
+    setFormReply(initialText || '');
     setModalType('reply-update');
   };
 

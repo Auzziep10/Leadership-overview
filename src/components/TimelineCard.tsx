@@ -57,7 +57,7 @@ interface TimelineCardProps {
   endDate?: string;
   users?: { id: string; name: string }[];
   currentUser?: { id: string; name: string; role?: string } | null;
-  onReplyClick?: (updateId: string) => void;
+  onReplyClick?: (updateId: string, initialText?: string) => void;
   onEditDates?: () => void;
   onEditTask?: (task: any) => void;
   onActionItem?: (task: any) => void;
@@ -529,12 +529,25 @@ export function TimelineCard({
                                                   paddingLeft: isConversationalReply ? '12px' : '0', 
                                                   borderLeft: isConversationalReply ? '2px solid var(--color-zinc-200)' : 'none' 
                                                 }}>
-                                                  <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
-                                                    <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : (isExplicitLog ? 'LOGGED AN UPDATE:' : 'REPLIED:')}</span>
-                                                    {isProgressUpdate && progressPill && (
-                                                      <span style={{ background: color, color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>
-                                                        {progressPill}
-                                                      </span>
+                                                  <strong style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px', color: msg.author_id === n.author_id ? 'var(--color-zinc-500)' : color, letterSpacing: '0.05em' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                      <span>{mAuthorName} {isProgressUpdate ? 'LOGGED PROGRESS:' : (isExplicitLog ? 'LOGGED AN UPDATE:' : 'REPLIED:')}</span>
+                                                      {isProgressUpdate && progressPill && (
+                                                        <span style={{ background: color, color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>
+                                                          {progressPill}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                    
+                                                    {onReplyClick && (
+                                                      <button 
+                                                        onClick={() => onReplyClick(n.id, `@${mAuthorName.split(' ')[0]} `)} 
+                                                        style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-zinc-700)'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-zinc-400)'}
+                                                      >
+                                                        Reply
+                                                      </button>
                                                     )}
                                                   </strong>
                                                   <span>{actualMessage}</span>

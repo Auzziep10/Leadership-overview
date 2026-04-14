@@ -126,6 +126,8 @@ export function TimelineCard({
     const sTime = calcStart || tStart;
     const eTime = calcEnd || tEnd;
     const sSpan = Math.max(1, eTime - sTime);
+    
+    const visibleNodes = trackNodes.filter(n => !n.is_action_item);
 
     return (
       <div className="timeline-track" onClick={(e) => e.stopPropagation()}>
@@ -145,9 +147,9 @@ export function TimelineCard({
         }}></div>
         
         <div className="timeline-nodes" style={{ position: 'absolute', left: '24px', right: '24px', top: '50%', height: 0 }}>
-          {trackNodes.length === 0 && <div style={{ fontSize: '11px', color: 'var(--color-zinc-400)', background: 'transparent', padding: '0 8px', zIndex: 3, position: 'absolute', top: '0', left: '50%', transform: 'translate(-50%, -50%)' }}>No Updates Yet</div>}
+          {visibleNodes.length === 0 && <div style={{ fontSize: '11px', color: 'var(--color-zinc-400)', background: 'transparent', padding: '0 8px', zIndex: 3, position: 'absolute', top: '0', left: '50%', transform: 'translate(-50%, -50%)' }}>No Updates Yet</div>}
           
-          {trackNodes.map((node, i) => {
+          {visibleNodes.map((node, i) => {
             const nTime = new Date(node.created_at).getTime();
             let pct = ((nTime - sTime) / sSpan) * 100;
             pct = Math.max(0, Math.min(100, pct)); // clamp
@@ -493,7 +495,7 @@ export function TimelineCard({
                           <span style={{ fontWeight: 500, color: 'var(--color-zinc-600)', textTransform: 'none', fontSize: '12px' }}>{pName}</span>
                         </div>
                         
-                        {renderTimelineTrack(updates.filter(u => pTasks.some(t => t.id === u.task_id)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), pStart, pEnd)}
+                        {renderTimelineTrack(updates.filter(u => pTasks.some(t => t.id === u.task_id) && !u.is_action_item).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), pStart, pEnd)}
                         
                         <span className="project-group-chevron" style={{ transform: expandedProjects[pid] ? 'rotate(90deg)' : 'none' }}>›</span>
                       </div>

@@ -1,10 +1,16 @@
 import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
-import { db, firebaseConfig } from './firebaseConfig';
+import { db, storage, firebaseConfig } from './firebaseConfig';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
 import type { User, Role, Project, Task, TaskUpdate } from '../types';
 
-// --- ROLES ---
+export const uploadSignatureAsset = async (base64String: string): Promise<string> => {
+  const fileName = `signatures/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.png`;
+  const storageRef = ref(storage, fileName);
+  await uploadString(storageRef, base64String, 'data_url');
+  return await getDownloadURL(storageRef);
+};// --- ROLES ---
 export const fetchRoles = async (): Promise<Role[]> => {
   const snap = await getDocs(collection(db, 'roles'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Role)).sort((a,b) => a.level - b.level);

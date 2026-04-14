@@ -5,7 +5,7 @@ import { auth } from '../services/firebaseConfig';
 import { useAuth } from '../services/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Modal } from './Modal';
-import { updateUserAvatar, updatePersonalDetails } from '../services/firestoreService';
+import { updateUserAvatar, updatePersonalDetails, uploadSignatureAsset } from '../services/firestoreService';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 
@@ -120,18 +120,24 @@ export function TopNav() {
            croppedAreaPixels.x, croppedAreaPixels.y, croppedAreaPixels.width, croppedAreaPixels.height, 
            0, 0, tw, th
         );
-        const dataUrl = canvas.toDataURL('image/webp', 0.8);
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
         
         if (cropTarget === 'avatar') {
+          // Keep avatars as direct base64 since they are cached locally on Firebase Auth objects in some configs
           await updateUserAvatar(user.id, dataUrl);
           setIsSettingsOpen(false);
           window.location.reload(); 
-        } else if (cropTarget === 'sigProfile') {
-          setSigProfileUrl(dataUrl);
-        } else if (cropTarget === 'sigBanner') {
-          setSigGlobalBanner(dataUrl);
-        } else if (cropTarget === 'sigLogo') {
-          setSigGlobalLogo(dataUrl);
+        } else {
+           // For signatures, we MUST bake them into remote Storage URLs because Gmail fails on base64 blob strings
+           const remoteUrl = await uploadSignatureAsset(dataUrl);
+           
+           if (cropTarget === 'sigProfile') {
+             setSigProfileUrl(remoteUrl);
+           } else if (cropTarget === 'sigBanner') {
+             setSigGlobalBanner(remoteUrl);
+           } else if (cropTarget === 'sigLogo') {
+             setSigGlobalLogo(remoteUrl);
+           }
         }
 
         setUploading(false);

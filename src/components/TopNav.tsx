@@ -151,11 +151,11 @@ export function TopNav() {
     img.onload = async () => {
       const canvas = document.createElement('canvas');
       
-      let tw = 120;
-      let th = 120;
+      let tw = 400;
+      let th = 400;
       if (cropTarget === 'sigBanner') { tw = 1200; th = 300; }
       else if (cropTarget === 'sigLogo') { tw = 400; th = 100; }
-      else if (cropTarget === 'sigProfile') { tw = 150; th = 150; }
+      else if (cropTarget === 'sigProfile') { tw = 400; th = 400; }
 
       canvas.width = tw;
       canvas.height = th;
@@ -303,10 +303,10 @@ export function TopNav() {
 
       const asize = 280;
       const ax = 96;
-      const ay = 80;
+      const ay = 60;
 
       ctx.beginPath();
-      ctx.arc(ax + asize/2, ay + asize/2, asize/2 + 12, 0, Math.PI * 2);
+      ctx.arc(ax + asize/2, ay + asize/2, asize/2 + 6, 0, Math.PI * 2);
       ctx.fillStyle = "#ffffff";
       ctx.fill();
 
@@ -366,7 +366,7 @@ export function TopNav() {
                  <td width="48" style="width: 48px;"></td>
                  <td valign="top" style="position: relative;">
                     <div style="margin-top: -110px;">
-                       <img src="${avatarUrl}" width="140" height="140" style="width: 140px; height: 140px; border-radius: 50%; border: 6px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
+                       <img src="${avatarUrl}" width="140" height="140" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
                     </div>
                  </td>
                </tr>

@@ -537,7 +537,7 @@ export function TimelineCard({
                                       {onReplyClick && canReply && (
                                         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                                           <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'white', background: color, border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '6px 14px', transition: 'all 0.2s', opacity: 0.9 }}>
-                                            {n.is_action_item ? '+ Add Action Item Log' : '+ Add Reply'}
+                                            + Add Thread Message
                                           </button>
                                         </div>
                                       )}
@@ -547,7 +547,7 @@ export function TimelineCard({
                                   {onReplyClick && canReply && messages.length === 0 && (
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                                       <button onClick={() => onReplyClick(n.id)} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '6px', cursor: 'pointer', padding: '6px 12px', transition: 'all 0.2s' }}>
-                                        {n.is_action_item ? '+ Add Action Item Log' : '+ Add Thread Message'}
+                                        + Add Thread Message
                                       </button>
                                     </div>
                                   )}

@@ -47,7 +47,7 @@ export function TopNav() {
   const [activeProfileId, setActiveProfileId] = useState<string>('default');
   const [sigProfileName, setSigProfileName] = useState('Main Signature');
 
-  const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
+  const [sigGlobalBanner, setSigGlobalBanner] = useState('https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner');
 
   const loadSignatureProfile = (profile: SignatureProfile, id: string) => {
     setActiveProfileId(id);
@@ -82,11 +82,11 @@ export function TopNav() {
         setSigFullName(user.name || '');
         setSigPhone(user.phone || '5053065100');
         setSigEmail(user.email || 'austin@catalyst.com.co');
-        setSigProfileUrl(user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80');
-        setSigGlobalLogo('https://wovn.vercel.app/wovn-signature-logo.png'); // placeholder
+        setSigProfileUrl(user.avatar_url || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile');
+        setSigGlobalLogo(''); // placeholder
       }
-      setSigProfileUrl(user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80');
-      setSigGlobalLogo('https://wovn.vercel.app/wovn-signature-logo.png'); // placeholder
+      setSigProfileUrl(user.avatar_url || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile');
+      setSigGlobalLogo(''); // placeholder
     }
   }, [user, isSettingsOpen]);
 
@@ -113,8 +113,8 @@ export function TopNav() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (target === 'sigBanner') setCropAspect(3);
-    else if (target === 'sigLogo') setCropAspect(2);
+    if (target === 'sigBanner') setCropAspect(4);
+    else if (target === 'sigLogo') setCropAspect(4);
     else setCropAspect(1);
 
     setCropTarget(target);
@@ -136,8 +136,8 @@ export function TopNav() {
       
       let tw = 120;
       let th = 120;
-      if (cropTarget === 'sigBanner') { tw = 600; th = 200; }
-      else if (cropTarget === 'sigLogo') { tw = 200; th = 100; }
+      if (cropTarget === 'sigBanner') { tw = 1200; th = 300; }
+      else if (cropTarget === 'sigLogo') { tw = 400; th = 100; }
       else if (cropTarget === 'sigProfile') { tw = 150; th = 150; }
 
       canvas.width = tw;
@@ -151,15 +151,13 @@ export function TopNav() {
         );
         const dataUrl = canvas.toDataURL('image/png', 1.0);
         
+        const remoteUrl = await uploadSignatureAsset(dataUrl);
+        
         if (cropTarget === 'avatar') {
-          // Keep avatars as direct base64 since they are cached locally on Firebase Auth objects in some configs
-          await updateUserAvatar(user.id, dataUrl);
+          await updateUserAvatar(user.id, remoteUrl);
           setIsSettingsOpen(false);
           window.location.reload(); 
         } else {
-           // For signatures, we MUST bake them into remote Storage URLs because Gmail fails on base64 blob strings
-           const remoteUrl = await uploadSignatureAsset(dataUrl);
-           
            if (cropTarget === 'sigProfile') {
              setSigProfileUrl(remoteUrl);
            } else if (cropTarget === 'sigBanner') {
@@ -247,43 +245,105 @@ export function TopNav() {
     }
   };
 
+  const [baking, setBaking] = useState(false);
+
   const copySignature = async () => {
     if (!user) return;
+    setBaking(true);
     try {
-      const html = generateSignatureHTML();
+      const bUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
+      const aUrl = sigProfileUrl || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 360;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Canvas context failed");
+
+      const loadImg = (u: string) => new Promise<HTMLImageElement>((res, rej) => {
+        const i = new Image();
+        i.crossOrigin = "anonymous";
+        i.onload = () => res(i);
+        i.onerror = () => rej(u);
+        i.src = u;
+      });
+
+      const [bImg, aImg] = await Promise.all([loadImg(bUrl), loadImg(aUrl)]);
+
+      ctx.clearRect(0, 0, 1200, 360);
+      ctx.drawImage(bImg, 0, 0, 1200, 300);
+
+      const asize = 280;
+      const ax = 96;
+      const ay = 80;
+
+      ctx.beginPath();
+      ctx.arc(ax + asize/2, ay + asize/2, asize/2 + 12, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ax + asize/2, ay + asize/2, asize/2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(aImg, ax, ay, asize, asize);
+      ctx.restore();
+
+      const bakedBase64 = canvas.toDataURL('image/png', 1.0);
+      const compositeUrl = await uploadSignatureAsset(bakedBase64);
+
+      const html = generateSignatureHTML(compositeUrl);
       const blob = new Blob([html], { type: 'text/html' });
       const clipboardItem = new window.ClipboardItem({ 'text/html': blob });
       await navigator.clipboard.write([clipboardItem]);
       alert('High-fidelity signature copied to clipboard globally! Open your Gmail or Outlook settings and hit paste to install.');
     } catch(err) {
-      alert("Clipboard API failure. Ensure your browser is secure context.");
+      console.warn(err);
+      // Fallback
+      try {
+        const html = generateSignatureHTML();
+        const blob = new Blob([html], { type: 'text/html' });
+        const clipboardItem = new window.ClipboardItem({ 'text/html': blob });
+        await navigator.clipboard.write([clipboardItem]);
+        alert("Clipboard saved! (Note: Used HTML fallback because Canvas CORS was blocked)");
+      } catch (fbErr) {
+        alert("Clipboard API failure. Ensure your browser is secure context.");
+      }
+    } finally {
+      setBaking(false);
     }
   };
 
-  const generateSignatureHTML = () => {
+  const generateSignatureHTML = (bakedCompositeUrl?: string) => {
     if (!user) return '';
-    const bannerUrl = sigGlobalBanner || 'https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop';
-    const avatarUrl = sigProfileUrl || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80';
+    const bannerUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
+    const avatarUrl = sigProfileUrl || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile';
+
+
     
     return `
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;">
   <tr>
     <td style="padding-bottom: 24px;">
       
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%;">
         <tr>
-          <td valign="top" style="position: relative;">
+          <td valign="top">
+            ${bakedCompositeUrl ? `
+            <img src="${bakedCompositeUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
+            ` : `
             <img src="${bannerUrl}" width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                <tr>
                  <td width="48" style="width: 48px;"></td>
-                 <td valign="top">
-                    <div style="margin-top: -80px;">
-                       <img src="${avatarUrl}" width="160" height="160" style="width: 160px; height: 160px; border-radius: 50%; border: 6px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
+                 <td valign="top" style="position: relative;">
+                    <div style="margin-top: -110px;">
+                       <img src="${avatarUrl}" width="140" height="140" style="width: 140px; height: 140px; border-radius: 50%; border: 6px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
                     </div>
                  </td>
                </tr>
             </table>
+            `}
           </td>
         </tr>
       </table>
@@ -292,16 +352,34 @@ export function TopNav() {
         <tr>
           <td width="48" style="width: 48px;"></td>
           <td valign="top" style="padding-top: 16px;">
-            <div style="font-weight: 800; font-size: 28px; color: #111111; margin: 0; padding: 0; letter-spacing: -0.02em;">${sigFullName}</div>
-            <div style="font-weight: 300; font-size: 15px; color: #555555; margin: 4px 0 0 0; padding: 0;">${sigTitle}</div>
-            <div style="font-weight: 300; font-size: 15px; color: #999999; margin: 2px 0 0 0; padding: 0;">${sigLocation}</div>
+            <div style="font-weight: 700; font-size: 28px; color: #000000; margin: 0; padding: 0; letter-spacing: -0.02em; line-height: 1.05;">${sigFullName}</div>
+            <div style="font-weight: 300; font-size: 15px; color: #333333; margin: 2px 0 0 0; padding: 0; letter-spacing: -0.01em; line-height: 1.2;">${sigTitle.replace('->', '→')}</div>
+            <div style="font-weight: 300; font-size: 15px; color: #999999; margin: 0; padding: 0; letter-spacing: -0.01em; line-height: 1.2;">${sigLocation}</div>
             
-            <div style="margin-top: 20px; margin-bottom: 28px;">
-               <a href="tel:${sigPhone}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/iphone.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Phone" /></a>
-               <a href="mailto:${sigEmail}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/speech-bubble-with-dots.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Chat" /></a>
-               <a href="${sigWebsite}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/domain.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="Web" /></a>
-               <a href="${sigLinkedin}" style="display:inline-block; margin-right:6px; text-decoration:none;"><img src="https://img.icons8.com/ios-filled/50/c2a67e/linkedin.png" width="36" height="36" style="width:36px; height:36px; border-radius:50%;" alt="LinkedIn" /></a>
-            </div>
+            <table cellpadding="0" cellspacing="0" border="0" style="margin-top: 16px; margin-bottom: 24px;">
+               <tr>
+                 <td style="padding-right: 8px;">
+                   <a href="tel:${sigPhone}" style="display:inline-block; text-decoration:none;">
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fphone.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Phone" />
+                   </a>
+                 </td>
+                 <td style="padding-right: 8px;">
+                   <a href="mailto:${sigEmail}" style="display:inline-block; text-decoration:none;">
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fchat.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Chat" />
+                   </a>
+                 </td>
+                 <td style="padding-right: 8px;">
+                   <a href="${sigWebsite}" style="display:inline-block; text-decoration:none;">
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fglobe.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Web" />
+                   </a>
+                 </td>
+                 <td>
+                   <a href="${sigLinkedin}" style="display:inline-block; text-decoration:none;">
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Flinkedin.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="LinkedIn" />
+                   </a>
+                 </td>
+               </tr>
+            </table>
 
             ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="160" style="display:block; margin-bottom:32px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 900; color: #111111; margin-bottom: 32px; letter-spacing: -0.05em;">WOV/V</div>`}
           </td>
@@ -389,12 +467,14 @@ export function TopNav() {
                   onCropChange={setCrop}
                   onCropComplete={onCropComplete}
                   onZoomChange={setZoom}
+                  restrictPosition={false}
+                  minZoom={0.1}
                 />
               </div>
               <input 
                 type="range" 
                 value={zoom} 
-                min={1} 
+                min={0.1} 
                 max={3} 
                 step={0.1} 
                 aria-labelledby="Zoom" 
@@ -427,15 +507,20 @@ export function TopNav() {
 
               {settingsTab === 'profile' ? (
                 <>
-                  <div style={{ padding: '24px', border: '2px dashed var(--color-zinc-200)', borderRadius: '8px', textAlign: 'center', position: 'relative' }}>
+                  <div style={{ padding: '24px', border: '2px dashed var(--color-zinc-200)', borderRadius: '8px', textAlign: 'center', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    {user?.avatar_url && (
+                       <img src={user.avatar_url} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'relative', zIndex: 5 }} />
+                    )}
                     <input 
                       type="file" 
                       accept="image/*" 
-                      onChange={handleImageUpload} 
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                      onChange={(e) => handleImageUpload(e, 'avatar')} 
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
                       disabled={uploading}
                     />
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Click or Drag a Photo Here</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)', position: 'relative', zIndex: 5 }}>
+                      {user?.avatar_url ? 'Click or drag to replace photo' : 'Click or Drag a Photo Here'}
+                    </span>
                   </div>
                   
                   <hr style={{ border: 'none', borderTop: '1px solid var(--color-zinc-100)', margin: '8px 0' }} />
@@ -606,10 +691,11 @@ export function TopNav() {
                       </div>
                       <button 
                         onClick={copySignature}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: baking ? 0.7 : 1 }}
+                        disabled={baking}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        Copy Signature
+                        {baking ? 'Baking Native Sig...' : 'Copy Signature'}
                       </button>
                     </div>
 

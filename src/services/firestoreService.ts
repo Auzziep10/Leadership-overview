@@ -171,6 +171,10 @@ export const updateTask = async (taskId: string, updates: Partial<any>) => {
   await updateDoc(doc(db, 'tasks', taskId), updates);
 };
 
+export const deleteTask = async (taskId: string) => {
+  await deleteDoc(doc(db, 'tasks', taskId));
+};
+
 export const updateTaskOrders = async (reorderedTasks: { id: string, order_index: number }[]) => {
   const batch = writeBatch(db);
   for (const task of reorderedTasks) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
@@ -52,6 +52,8 @@ export function Dashboard() {
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
   const [formLeadEmail, setFormLeadEmail] = useState('');
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadDashboardData = async () => { /* deprecated, handled by snapshots */ };
 
@@ -143,10 +145,15 @@ export function Dashboard() {
   // Submit Handlers
   const submitProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createProject(formTitle, formDesc, formEndDate);
-    setModalType(null);
-    setFormTitle(''); setFormDesc(''); setFormEndDate('');
-    loadDashboardData();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createProject(formTitle, formDesc, formEndDate);
+      setModalType(null);
+      setFormTitle(''); setFormDesc(''); setFormEndDate('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const submitEditProject = async (e: React.FormEvent) => {
@@ -166,9 +173,17 @@ export function Dashboard() {
   };
 
   const archiveTask = async () => {
-    const confirmation = window.prompt('DANGER: Archiving this task will remove it from the pipeline. Type ARCHIVE to confirm.');
+    const confirmation = window.prompt('WARNING: Archiving this task will remove it from the pipeline. Type ARCHIVE to confirm.');
     if (confirmation === 'ARCHIVE') {
       await updateTask(activeTaskId, { status: 'archived' });
+      setModalType(null);
+    }
+  };
+
+  const hardDeleteTask = async () => {
+    const confirmation = window.prompt('DANGER: This will permanently destroy the task and all associated timeline logs from the database. Type DELETE to confirm.');
+    if (confirmation === 'DELETE') {
+      await deleteTask(activeTaskId);
       setModalType(null);
     }
   };
@@ -196,15 +211,20 @@ export function Dashboard() {
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newTaskId = await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
-    if (currentUser) {
-      for (const item of formActionItems.filter(i => i.trim() !== '')) {
-        await addTaskUpdate(newTaskId, currentUser.id, item, true);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const newTaskId = await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
+      if (currentUser) {
+        for (const item of formActionItems.filter(i => i.trim() !== '')) {
+          await addTaskUpdate(newTaskId, currentUser.id, item, true);
+        }
       }
+      setModalType(null);
+      setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormActionItems([]);
+    } finally {
+      setIsSubmitting(false);
     }
-    setModalType(null);
-    setFormTitle(''); setFormDetails(''); setFormAssigneeIds([]); setFormDueDate(''); setFormActionItems([]);
-    loadDashboardData();
   };
 
   const handleReorderTasks = async (reorderedTasks: { id: string, order_index: number }[]) => {
@@ -947,7 +967,7 @@ export function Dashboard() {
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Specific Due Date & Time</label>
             <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           </div>
-          <button type="submit" className="auth-button">Add Task</button>
+          <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Add Task'}</button>
         </form>
       </Modal>
 
@@ -1027,7 +1047,10 @@ export function Dashboard() {
           </div>
           
           <button type="submit" className="auth-button">Save Changes to Task</button>
-          <button type="button" onClick={archiveTask} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-red-600)', color: 'var(--color-red-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Archive Task</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <button type="button" onClick={archiveTask} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-zinc-400)', color: 'var(--color-zinc-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Archive Task</button>
+            <button type="button" onClick={hardDeleteTask} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-red-600)', color: 'var(--color-red-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Delete Task</button>
+          </div>
         </form>
       </Modal>
 
@@ -1059,7 +1082,7 @@ export function Dashboard() {
         <form onSubmit={submitReply} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>Your message will be appended to this log's active timeline thread.</div>
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
-          <button type="submit" className="auth-button">Send Message</button>
+          <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send Message'}</button>
         </form>
       </Modal>
 

@@ -465,8 +465,7 @@ export function TopNav() {
 
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
-          <td width="48" style="width: 48px;"></td>
-          <td style="padding-bottom: 24px; padding-right: 48px;">
+          <td style="padding-bottom: 24px;">
             <div style="font-size: 9px; color: #aaaaaa; margin: 0; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">CONFIDENTIALITY NOTICE:</div>
             <div style="font-size: 8px; color: #bbbbbb; margin: 4px 0 0 0; line-height: 1.5; font-weight: 400;">The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited.</div>
           </td>

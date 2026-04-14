@@ -45,6 +45,8 @@ interface TimelineCardProps {
   onActionItem?: (task: any) => void;
   onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
+  onUpdateTask?: (taskId: string, updates: any) => void;
+  onProgressClick?: (taskId: string, pct: number) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
   projects?: { id: string; title: string, [key: string]: any }[];
   groupByProject?: boolean;
@@ -72,6 +74,8 @@ export function TimelineCard({
   onActionItem,
   onLogUpdateClick,
   onReorderTasks,
+  onUpdateTask,
+  onProgressClick,
   projects = [],
   groupByProject = false,
   tasks = [],
@@ -333,7 +337,41 @@ export function TimelineCard({
                           Edit
                         </div>
                       )}
-                      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '6px 14px', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>
+                      {onUpdateTask && (
+                        <div style={{ display: 'flex', gap: '2px', background: 'var(--color-zinc-100)', padding: '2px', borderRadius: '6px' }}>
+                          {[0, 25, 50, 75, 100].map(pct => {
+                            const isActive = task.progress === pct || (pct === 100 && task.status === 'done') || (pct === 0 && !task.progress && task.status !== 'done');
+                            return (
+                            <button
+                              key={pct}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onProgressClick) {
+                                  onProgressClick(task.id, pct);
+                                } else if (onUpdateTask) {
+                                  onUpdateTask(task.id, { progress: pct, status: pct === 100 ? 'done' : (pct === 0 ? 'todo' : 'active') });
+                                }
+                              }}
+                              style={{
+                                fontSize: '9px',
+                                fontWeight: 700,
+                                color: isActive ? 'white' : 'var(--color-zinc-500)',
+                                background: isActive 
+                                  ? (pct === 100 ? 'var(--color-zinc-900)' : 'var(--color-zinc-700)') 
+                                  : 'transparent',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 6px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {pct === 100 ? 'Done' : `${pct}%`}
+                            </button>
+                          )})}
+                        </div>
+                      )}
+                      {!onUpdateTask && <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-100)', padding: '6px 14px', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{task.status}</div>}
                     </div>
                   </div>
                   

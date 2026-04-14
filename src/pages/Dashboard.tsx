@@ -7,17 +7,21 @@ import { useAuth } from '../services/AuthContext';
 
 export function Dashboard() {
   const { user: currentUser } = useAuth();
-  const [view, setView] = useState<'team' | 'projects' | 'leads'>('team');
+  const [view, setView] = useState<'team' | 'projects' | 'leads' | 'metrics' | 'archives' | 'pulse'>('team');
   const [projectViewType, setProjectViewType] = useState<'list' | 'grid'>('grid');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'progress-log' | null>(null);
+  const [progressLogTaskId, setProgressLogTaskId] = useState('');
+  const [progressLogPct, setProgressLogPct] = useState<number>(0);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [activeUserId, setActiveUserId] = useState<string>('');
   const [tasksListSubject, setTasksListSubject] = useState<string>('');
@@ -62,6 +66,14 @@ export function Dashboard() {
       let u = [...allU];
       let p = [...allP];
       let t = [...allT];
+
+      if (!isStaff) {
+        setArchivedProjects(p.filter(proj => proj.status === 'archived'));
+        setArchivedTasks(t.filter(task => task.status === 'archived'));
+      }
+
+      p = p.filter(proj => proj.status !== 'archived');
+      t = t.filter(task => task.status !== 'archived');
 
       if (isStaff) {
         u = u.filter(user => user.id === currentUser.id);
@@ -142,6 +154,30 @@ export function Dashboard() {
     loadDashboardData();
   };
 
+  const archiveProject = async () => {
+    const confirmation = window.prompt('DANGER: Archiving this project will remove it from the pipeline. Type ARCHIVE to confirm.');
+    if (confirmation === 'ARCHIVE') {
+      await updateProject(activeProjectId, undefined, undefined, 'archived');
+      setModalType(null);
+    }
+  };
+
+  const archiveTask = async () => {
+    const confirmation = window.prompt('DANGER: Archiving this task will remove it from the pipeline. Type ARCHIVE to confirm.');
+    if (confirmation === 'ARCHIVE') {
+      await updateTask(activeTaskId, { status: 'archived' });
+      setModalType(null);
+    }
+  };
+
+  const restoreProject = async (id: string) => {
+    await updateProject(id, undefined, undefined, 'active');
+  };
+
+  const restoreTask = async (id: string) => {
+    await updateTask(id, { status: 'todo' });
+  };
+
   const submitEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus, project_id: formTaskProjectId });
@@ -219,6 +255,26 @@ export function Dashboard() {
       setFormTaskId(''); setFormNote('');
       loadDashboardData();
     }
+  };
+
+  const submitProgressLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formNote || formNote.trim() === '') return;
+    
+    // Update task
+    const isDone = progressLogPct === 100;
+    await updateTask(progressLogTaskId, { progress: progressLogPct, status: isDone ? 'done' : (progressLogPct === 0 ? 'todo' : 'active') });
+    
+    // Add timeline log
+    if (currentUser) {
+      const explicitNote = `[Advanced to ${isDone ? 'Done' : progressLogPct + '%'}] ${formNote.trim()}`;
+      await addTaskUpdate(progressLogTaskId, currentUser.id, explicitNote);
+    }
+    
+    setModalType(null);
+    setFormNote('');
+    setProgressLogTaskId('');
+    setProgressLogPct(0);
   };
 
   const convertLead = async (projectId: string) => {
@@ -312,6 +368,21 @@ export function Dashboard() {
           Team Workload
         </button>
         <button 
+          onClick={() => setView('metrics')}
+          style={{ 
+            padding: '8px 24px', 
+            borderRadius: '99px',
+            border: '1px solid var(--color-zinc-200)',
+            background: view === 'metrics' ? 'var(--color-zinc-900)' : 'white',
+            color: view === 'metrics' ? 'white' : 'var(--color-zinc-600)',
+            fontWeight: 600,
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          Staff Metrics
+        </button>
+        <button 
           onClick={() => setView('projects')}
           style={{ 
             padding: '8px 24px', 
@@ -341,6 +412,40 @@ export function Dashboard() {
             }}
           >
             Customer Leads
+          </button>
+        )}
+        {!isStaff && (
+          <button 
+            onClick={() => setView('archives')}
+            style={{ 
+              padding: '8px 24px', 
+              borderRadius: '99px',
+              border: '1px solid var(--color-zinc-200)',
+              background: view === 'archives' ? 'var(--color-zinc-900)' : 'white',
+              color: view === 'archives' ? 'white' : 'var(--color-zinc-600)',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Data Archives
+          </button>
+        )}
+        {!isStaff && (
+          <button 
+            onClick={() => setView('pulse')}
+            style={{ 
+              padding: '8px 24px', 
+              borderRadius: '99px',
+              border: '1px solid var(--color-zinc-200)',
+              background: view === 'pulse' ? 'var(--color-zinc-900)' : 'white',
+              color: view === 'pulse' ? 'white' : 'var(--color-zinc-600)',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Live Pulse
           </button>
         )}
       </div>
@@ -399,12 +504,69 @@ export function Dashboard() {
                   onActionItem={openActionItemModal}
                   onLogUpdateClick={openTaskUpdateModal}
                   onReorderTasks={handleReorderTasks}
+                  onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
+                  onProgressClick={(taskId, pct) => {
+                    setProgressLogTaskId(taskId);
+                    setProgressLogPct(pct);
+                    setModalType('progress-log');
+                  }}
                 />
               );
             })}
           </>
         )})()}
-
+        {view === 'metrics' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Staff Day-to-Day Productivity</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+              {users.map(user => {
+                const userTasks = tasks.filter(t => t.assignees?.includes(user.id));
+                const completedTasks = userTasks.filter(t => t.status === 'done');
+                const completionRatio = userTasks.length > 0 ? Math.round((completedTasks.length / userTasks.length) * 100) : 0;
+                
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const userUpdatesToday = updates.filter(u => u.author_id === user.id && new Date(u.created_at) >= today);
+                
+                return (
+                  <div key={user.id} style={{ background: 'white', borderRadius: '16px', border: '1px solid var(--color-zinc-200)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--color-zinc-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 800, fontFamily: 'var(--font-serif)' }}>
+                        {user.initials || user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-zinc-900)' }}>{user.name}</div>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{user.role}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-600)' }}>Total Tasks Assigned</span>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--color-zinc-900)' }}>{userTasks.length}</span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-600)' }}>Completion Ratio</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: completionRatio === 100 ? 'var(--color-zinc-900)' : 'var(--color-zinc-600)' }}>{completionRatio}%</span>
+                        </div>
+                        <div style={{ height: '6px', background: 'var(--color-zinc-200)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${completionRatio}%`, background: 'var(--color-zinc-900)', borderRadius: '3px', transition: 'width 0.4s ease' }}></div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-zinc-200)', paddingTop: '12px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-600)' }}>Activity Logs Today</span>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: userUpdatesToday.length > 0 ? 'var(--color-zinc-900)' : 'var(--color-zinc-400)' }}>{userUpdatesToday.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {view === 'projects' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -465,6 +627,12 @@ export function Dashboard() {
                         onActionItem={openActionItemModal}
                         onLogUpdateClick={openTaskUpdateModal}
                         onReorderTasks={handleReorderTasks}
+                        onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
+                        onProgressClick={(taskId, pct) => {
+                          setProgressLogTaskId(taskId);
+                          setProgressLogPct(pct);
+                          setModalType('progress-log');
+                        }}
                       />
                     ) : (
                       <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
@@ -552,11 +720,85 @@ export function Dashboard() {
                     onActionItem={openActionItemModal}
                     onLogUpdateClick={openTaskUpdateModal}
                     onReorderTasks={handleReorderTasks}
+                    onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
+                    onProgressClick={(taskId, pct) => {
+                      setProgressLogTaskId(taskId);
+                      setProgressLogPct(pct);
+                      setModalType('progress-log');
+                    }}
                   />
                 </div>
               );
             })}
           </>
+        )}
+        {view === 'archives' && !isStaff && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Projects</div>
+              {archivedProjects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived projects.</div>}
+              {archivedProjects.map(proj => (
+                <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{proj.title}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(proj.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <button onClick={() => restoreProject(proj.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Project</button>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Archived Tasks</div>
+              {archivedTasks.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', marginLeft: '8px' }}>No archived tasks.</div>}
+              {archivedTasks.map(task => (
+                <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-zinc-900)' }}>{task.title}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <button onClick={() => restoreTask(task.id)} style={{ padding: '8px 16px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Restore Task</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {view === 'pulse' && !isStaff && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Global Activity Feed</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {updates.slice().sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50).map(upd => {
+                const author = users.find(u => u.id === upd.author_id);
+                const task = tasks.find(t => t.id === upd.task_id) || archivedTasks.find(t => t.id === upd.task_id);
+                const project = projects.find(p => p.id === task?.project_id) || archivedProjects.find(p => p.id === task?.project_id);
+                
+                return (
+                  <div key={upd.id} style={{ display: 'flex', gap: '16px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--color-zinc-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 800, fontFamily: 'var(--font-serif)', flexShrink: 0 }}>
+                      {author?.initials || author?.name.charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{author?.name || 'Unknown User'}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {project?.title ? `${project.title} › ` : ''}{task?.title || 'Unknown Task'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-zinc-400)' }}>
+                          {new Date(upd.created_at).toLocaleDateString()} {new Date(upd.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--color-zinc-800)', lineHeight: '1.5', marginTop: '4px', background: upd.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-50)', padding: '12px', borderRadius: '8px', border: upd.is_action_item ? '1px solid var(--color-red-100)' : 'none' }}>
+                        {upd.is_action_item && <span style={{ fontWeight: 800, color: 'var(--color-red-600)', display: 'block', marginBottom: '4px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚨 Action Item</span>}
+                        {upd.note}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
 
@@ -583,6 +825,7 @@ export function Dashboard() {
             <input type="date" value={formEndDate} onChange={e => setFormEndDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           </div>
           <button type="submit" className="auth-button">Update Timeline Parameters</button>
+          <button type="button" onClick={archiveProject} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-red-600)', color: 'var(--color-red-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Archive Project</button>
         </form>
       </Modal>
 
@@ -722,6 +965,7 @@ export function Dashboard() {
           </div>
           
           <button type="submit" className="auth-button">Save Changes to Task</button>
+          <button type="button" onClick={archiveTask} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-red-600)', color: 'var(--color-red-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Archive Task</button>
         </form>
       </Modal>
 
@@ -844,6 +1088,16 @@ export function Dashboard() {
             })
           )}
         </div>
+      </Modal>
+
+      <Modal isOpen={modalType === 'progress-log'} onClose={() => { setModalType(null); setProgressLogPct(0); setProgressLogTaskId(''); setFormNote(''); }} title={`Log Event Context (${progressLogPct === 100 ? 'Done' : progressLogPct + '%'})`}>
+        <form onSubmit={submitProgressLog} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-zinc-600)', lineHeight: '1.5' }}>
+            To properly track workflow metrics, please provide a brief timeline update detailing this advancement.
+          </div>
+          <textarea placeholder="Describe what progressed..." value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
+          <button type="submit" className="auth-button">Confirm Advancement</button>
+        </form>
       </Modal>
     </div>
   );

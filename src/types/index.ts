@@ -37,7 +37,8 @@ export interface Task {
   assignees: string[]; // User IDs
   due_date?: string; // Newly added
   created_at: string;
-  status: 'pending' | 'in_progress' | 'review' | 'done';
+  status: 'pending' | 'in_progress' | 'review' | 'done' | 'todo' | 'active'; // Updated based on app usage
+  progress?: number; // Stores completion percentages (e.g. 25, 50, 75, 100)
 }
 
 export interface ThreadMessage {

@@ -268,33 +268,7 @@ export function TopNav() {
     if (!user) return;
     setBaking(true);
 
-    if (!navigator || !navigator.clipboard || !window.ClipboardItem) {
-      try {
-        const fallbackHtml = generateSignatureHTML();
-        const div = document.createElement('div');
-        div.innerHTML = fallbackHtml;
-        div.style.position = 'absolute';
-        div.style.left = '-9999px';
-        div.style.opacity = '0';
-        document.body.appendChild(div);
-        
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(div);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        
-        document.execCommand('copy');
-        
-        selection?.removeAllRanges();
-        document.body.removeChild(div);
-        alert("Signature copied! (Note: Using local offline clipboard access because you are testing without an HTTPS certificate)");
-      } catch(e) {
-        alert("Clipboard API failure. Mac Local Dev detected. Try highlighting the HTML preview natively and copying.");
-      }
-      setBaking(false);
-      return;
-    }
+
 
     try {
       const bUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
@@ -374,7 +348,29 @@ export function TopNav() {
       }
     } catch(err) {
       console.error(err);
-      alert("Clipboard API failure. Ensure your browser is running secure context HTTPS or try copying the preview manually.");
+      try {
+        const fallbackHtml = generateSignatureHTML();
+        const div = document.createElement('div');
+        div.innerHTML = fallbackHtml;
+        div.style.position = 'absolute';
+        div.style.left = '-9999px';
+        div.style.opacity = '0';
+        document.body.appendChild(div);
+        
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(div);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        document.execCommand('copy');
+        
+        selection?.removeAllRanges();
+        document.body.removeChild(div);
+        alert("Signature copied! (Note: Using local offline clipboard access because you are testing without an HTTPS certificate)");
+      } catch(e) {
+        alert("Clipboard API failure. Mac Local Dev detected. Try highlighting the HTML preview natively and copying.");
+      }
     } finally {
       setBaking(false);
     }

@@ -488,8 +488,9 @@ export function TimelineCard({
                         onClick={() => setExpandedProjects(prev => ({ ...prev, [pid]: !prev[pid] }))}
                         className="project-group-header"
                       >
-                        <div className="project-group-title">
-                          PROJECT: {pName}
+                        <div className="project-group-title" style={{ display: 'flex', flexDirection: 'column', gap: '4px', lineHeight: '1.1' }}>
+                          <span style={{ fontWeight: 800, fontSize: '10px' }}>PROJECT</span>
+                          <span style={{ fontWeight: 500, color: 'var(--color-zinc-600)', textTransform: 'none' }}>{pName}</span>
                         </div>
                         
                         {renderTimelineTrack(updates.filter(u => pTasks.some(t => t.id === u.task_id)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), pStart, pEnd)}

@@ -1,7 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Download, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { TaskUpdate } from '../types';
+
+const SortableTaskWrapper = ({ id, children }: { id: string, children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 0,
+    position: isDragging ? ('relative' as const) : ('static' as const),
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+};
 
 interface TimelineCardProps {
   title: string;
@@ -60,15 +81,35 @@ export function TimelineCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
-  const [localTasks, setLocalTasks] = useState(assignedTasks);
+  const [localTasks, setLocalTasks] = useState(assignedTasks || []);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setLocalTasks([...assignedTasks].sort((a,b) => (a.order_index || 0) - (b.order_index || 0)));
+    setLocalTasks([...(assignedTasks || [])].sort((a,b) => (a.order_index || 0) - (b.order_index || 0)));
   }, [assignedTasks]);
 
   const toggleTask = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id && over?.id) {
+       setLocalTasks((items) => {
+         const oldIndex = items.findIndex(t => t.id === active.id);
+         const newIndex = items.findIndex(t => t.id === over.id);
+         const newOrder = arrayMove(items, oldIndex, newIndex);
+         if (onReorderTasks) {
+           onReorderTasks(newOrder.map((t, idx) => ({ id: t.id, order_index: idx })));
+         }
+         return newOrder;
+       });
+    }
   };
 
   const nodes = updates.slice().sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -92,7 +133,12 @@ export function TimelineCard({
         </div>
 
         <div className="timeline-line"></div>
-        <div className="timeline-progress" style={{ width: trackNodes.length > 0 ? 'calc(100% - 48px)' : '0%' }}></div>
+        <div className="timeline-progress" style={{ 
+          width: (() => {
+            const rawProg = Math.max(0, Math.min(100, ((Date.now() - sTime) / sSpan) * 100));
+            return `calc(${rawProg}% - ${rawProg * 0.48}px)`;
+          })() 
+        }}></div>
         
         <div className="timeline-nodes" style={{ position: 'absolute', left: '24px', right: '24px', top: '50%', height: 0 }}>
           {trackNodes.length === 0 && <div style={{ fontSize: '11px', color: 'var(--color-zinc-400)', background: 'transparent', padding: '0 8px', zIndex: 3, position: 'absolute', top: '0', left: '50%', transform: 'translate(-50%, -50%)' }}>No Updates Yet</div>}
@@ -110,7 +156,7 @@ export function TimelineCard({
               }
             }
             
-            const canReply = currentUser?.role !== 'staff' || currentUser?.id === node.author_id;
+            const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === node.author_id;
 
             return (
               <div key={node.id} className="timeline-node-wrapper" style={{ position: 'absolute', left: `${pct}%`, top: '0', transform: 'translate(-50%, -50%)' }}>
@@ -251,32 +297,14 @@ export function TimelineCard({
       >
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {localTasks.length > 0 ? (
-            (() => {
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            {(() => {
               const renderTask = (task: any, idx: number) => {
                 const taskNodes = nodes.filter(n => n.task_id === task.id);
                 return (
                   <div 
                     key={task.id} 
-                  draggable
-                  onDragStart={() => { setDraggedIndex(idx); }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (draggedIndex === null || draggedIndex === idx) return;
-                    const newTasks = [...localTasks];
-                    const draggedItem = newTasks[draggedIndex];
-                    newTasks.splice(draggedIndex, 1);
-                    newTasks.splice(idx, 0, draggedItem);
-                    setDraggedIndex(idx);
-                    setLocalTasks(newTasks);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDraggedIndex(null);
-                    if (onReorderTasks) {
-                      onReorderTasks(localTasks.map((t, index) => ({ id: t.id, order_index: index })));
-                    }
-                  }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: draggedIndex === idx ? 0.5 : 1 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
                 >
                   <div 
                     onClick={() => toggleTask(task.id)}
@@ -323,7 +351,7 @@ export function TimelineCard({
                             messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
                           }
                         }
-                        const canReply = currentUser?.role !== 'staff' || currentUser?.id === n.author_id;
+                        const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === n.author_id;
 
                         return (
                           <div key={n.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)' }}>
@@ -420,28 +448,37 @@ export function TimelineCard({
                     <div key={pid} style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)' }}>
                       <div 
                         onClick={() => setExpandedProjects(prev => ({ ...prev, [pid]: !prev[pid] }))}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: '16px' }}
+                        className="project-group-header"
                       >
-                        <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-zinc-500)', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '200px' }}>
+                        <div className="project-group-title">
                           PROJECT: {pName}
                         </div>
                         
                         {renderTimelineTrack(updates.filter(u => pTasks.some(t => t.id === u.task_id)).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), pStart, pEnd)}
                         
-                        <span style={{ transform: expandedProjects[pid] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'var(--color-zinc-400)' }}>›</span>
+                        <span className="project-group-chevron" style={{ transform: expandedProjects[pid] ? 'rotate(90deg)' : 'none' }}>›</span>
                       </div>
                       {expandedProjects[pid] && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '8px' }}>
-                          {pTasks.map(t => renderTask(t, -1))}
-                        </div>
+                        <SortableContext items={pTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '8px' }}>
+                            {pTasks.map(t => <SortableTaskWrapper key={t.id} id={t.id}>{renderTask(t, -1)}</SortableTaskWrapper>)}
+                          </div>
+                        </SortableContext>
                       )}
                     </div>
                   );
                 });
               }
 
-              return localTasks.map((task, idx) => renderTask(task, idx));
-            })()
+              return (
+                <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {localTasks.map((task, idx) => <SortableTaskWrapper key={task.id} id={task.id}>{renderTask(task, idx)}</SortableTaskWrapper>)}
+                  </div>
+                </SortableContext>
+              );
+            })()}
+            </DndContext>
           ) : (
             <>
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Timeline Logs</div>
@@ -457,7 +494,7 @@ export function TimelineCard({
                       messages.push({ id: 'lgcy2', author_id: n.author_id, message: n.user_response, created_at: '' });
                     }
                   }
-                  const canReply = currentUser?.role !== 'staff' || currentUser?.id === n.author_id;
+                  const canReply = (currentUser?.role === 'owner' || currentUser?.role === 'admin') || currentUser?.id === n.author_id;
 
                   return (
                     <div key={n.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>

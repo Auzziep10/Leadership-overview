@@ -8,6 +8,7 @@ import { useAuth } from '../services/AuthContext';
 export function Dashboard() {
   const { user: currentUser } = useAuth();
   const [view, setView] = useState<'team' | 'projects' | 'leads'>('team');
+  const [projectViewType, setProjectViewType] = useState<'list' | 'grid'>('grid');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -16,11 +17,13 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | null>(null);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [activeUserId, setActiveUserId] = useState<string>('');
   const [tasksListSubject, setTasksListSubject] = useState<string>('');
   const [tasksListItems, setTasksListItems] = useState<Task[]>([]);
+  const [updatesListSubject, setUpdatesListSubject] = useState<string>('');
+  const [updatesListItems, setUpdatesListItems] = useState<TaskUpdate[]>([]);
   const [activeUpdateId, setActiveUpdateId] = useState<string>('');
   const [activeTaskId, setActiveTaskId] = useState<string>('');
   
@@ -55,7 +58,7 @@ export function Dashboard() {
     let allUpd: TaskUpdate[] = [];
 
     const processData = () => {
-      const isStaff = currentUser.role === 'staff';
+      const isStaff = currentUser.role !== 'owner' && currentUser.role !== 'admin';
       let u = [...allU];
       let p = [...allP];
       let t = [...allT];
@@ -174,9 +177,9 @@ export function Dashboard() {
 
   const submitUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addTaskUpdate(formTaskId, activeUserId, formNote);
+    await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote);
     setModalType(null);
-    setFormTaskId(''); setFormNote('');
+    setFormTaskId(''); setFormNote(''); setActiveUserId('');
     loadDashboardData();
   };
 
@@ -259,10 +262,12 @@ export function Dashboard() {
 
   const openUpdateModal = (userId: string) => {
     setActiveUserId(userId);
+    setFormTaskId('');
     setModalType('update');
   };
 
   const openTaskUpdateModal = (taskId: string) => {
+    setActiveUserId('');
     setFormTaskId(taskId);
     setModalType('update');
   };
@@ -278,13 +283,19 @@ export function Dashboard() {
     setModalType('tasks-list');
   };
 
-  const isStaff = currentUser?.role === 'staff';
+  const openUpdatesList = (subjectName: string, items: TaskUpdate[]) => {
+    setUpdatesListSubject(subjectName);
+    setUpdatesListItems(items.slice().sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    setModalType('updates-list');
+  };
+
+  const isStaff = currentUser?.role !== 'owner' && currentUser?.role !== 'admin';
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '13px', fontWeight: 600 }}>Loading Dashboard...</div>;
 
   return (
     <div>
-      <div className="dashboard-toggles" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}>
+      <div className="dashboard-toggles" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
         <button 
           onClick={() => setView('team')}
           style={{ 
@@ -396,60 +407,104 @@ export function Dashboard() {
 
         {view === 'projects' && (
           <>
-            {!isStaff && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', gap: '4px', background: 'var(--color-zinc-100)', padding: '4px', borderRadius: '8px' }}>
+                <button onClick={() => setProjectViewType('list')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'list' ? 'white' : 'transparent', color: projectViewType === 'list' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>List View</button>
+                <button onClick={() => setProjectViewType('grid')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'grid' ? 'white' : 'transparent', color: projectViewType === 'grid' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Grid View</button>
+              </div>
+              {!isStaff && (
                 <button 
                   onClick={() => setModalType('project')}
-                  style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 20px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-zinc-100)'}>
                   New Project +
                 </button>
-              </div>
-            )}
+              )}
+            </div>
             {projects.filter(p => p.status !== 'lead').length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
-            {projects.filter(p => p.status !== 'lead').filter(proj => {
-              if (!searchQuery) return true;
-              const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
-              const pTasks = tasks.filter(t => t.project_id === proj.id);
-              const matchTasks = pTasks.some(t => t.title.toLowerCase().includes(searchQuery));
-              const assignedUserIds = new Set(pTasks.flatMap(t => t.assignees || []));
-              const matchStaff = users.some(u => assignedUserIds.has(u.id) && (u.name.toLowerCase().includes(searchQuery) || u.role?.toLowerCase().includes(searchQuery)));
-              return matchProj || matchTasks || matchStaff;
-            }).map(proj => {
-              // Get tasks for this project
-              const projTasks = tasks.filter(t => t.project_id === proj.id);
-              // Get all updates for this project's tasks
-              const projUpdates = updates.filter(update => projTasks.some(t => t.id === update.task_id));
-              
-              return (
-                <div key={proj.id} style={{ position: 'relative' }}>
-                  <TimelineCard 
-                    initials={proj.title.charAt(0).toUpperCase()} 
-                  title={proj.title} 
-                  subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
-                  color="#18181b" 
-                  updates={projUpdates}
-                  {...(!isStaff ? {
-                    action1Label: "Add Task",
-                    onAction1: () => openTaskModal(proj.id),
-                    action2Label: "View All Tasks",
-                    onAction2: () => openTasksList(`Project (${proj.title})`, projTasks),
-                    onEditDates: () => openEditProjectModal(proj)
-                  } : {})}
-                  startDate={proj.created_at}
-                  endDate={proj.end_date}
-                  users={users}
-                  tasks={tasks}
-                  assignedTasks={projTasks}
-                  currentUser={currentUser}
-                  onReplyClick={openReplyModal}
-                  onEditTask={openEditTaskModal}
-                  onActionItem={openActionItemModal}
-                  onLogUpdateClick={openTaskUpdateModal}
-                  onReorderTasks={handleReorderTasks}
-                />
-              </div>
-              );
-            })}
+            <div style={projectViewType === 'list' ? { display: 'flex', flexDirection: 'column', gap: '24px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+              {projects.filter(p => p.status !== 'lead').filter(proj => {
+                if (!searchQuery) return true;
+                const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
+                const pTasks = tasks.filter(t => t.project_id === proj.id);
+                const matchTasks = pTasks.some(t => t.title.toLowerCase().includes(searchQuery));
+                const assignedUserIds = new Set(pTasks.flatMap(t => t.assignees || []));
+                const matchStaff = users.some(u => assignedUserIds.has(u.id) && (u.name.toLowerCase().includes(searchQuery) || u.role?.toLowerCase().includes(searchQuery)));
+                return matchProj || matchTasks || matchStaff;
+              }).map(proj => {
+                // Get tasks for this project
+                const projTasks = tasks.filter(t => t.project_id === proj.id);
+                // Get all updates for this project's tasks
+                const projUpdates = updates.filter(update => projTasks.some(t => t.id === update.task_id));
+                
+                return (
+                  <div key={proj.id} style={{ position: 'relative' }}>
+                    {projectViewType === 'list' ? (
+                      <TimelineCard 
+                        initials={proj.title.charAt(0).toUpperCase()} 
+                        title={proj.title} 
+                        subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
+                        color="#18181b" 
+                        updates={projUpdates}
+                        {...(!isStaff ? {
+                          action1Label: "Add Task",
+                          onAction1: () => openTaskModal(proj.id),
+                          action2Label: "View All Tasks",
+                          onAction2: () => openTasksList(`Project (${proj.title})`, projTasks),
+                          onEditDates: () => openEditProjectModal(proj)
+                        } : {})}
+                        startDate={proj.created_at}
+                        endDate={proj.end_date}
+                        users={users}
+                        tasks={tasks}
+                        assignedTasks={projTasks}
+                        currentUser={currentUser}
+                        onReplyClick={openReplyModal}
+                        onEditTask={openEditTaskModal}
+                        onActionItem={openActionItemModal}
+                        onLogUpdateClick={openTaskUpdateModal}
+                        onReorderTasks={handleReorderTasks}
+                      />
+                    ) : (
+                      <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.05)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.02)'; }}
+                        onClick={() => openTasksList(`Project (${proj.title})`, projTasks)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ flex: '0 0 48px', height: '48px', borderRadius: '12px', background: 'var(--color-zinc-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, fontFamily: 'var(--font-serif)' }}>
+                            {proj.title.charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-zinc-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.title}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>{projTasks.length} Active Tasks</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '12px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>{proj.status.toUpperCase()}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Update</div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>
+                              {projUpdates.length > 0 ? new Date(projUpdates[0].created_at).toLocaleDateString() : 'None'}
+                            </div>
+                          </div>
+                        </div>
+                        {!isStaff && (
+                          <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                            <button onClick={(e) => { e.stopPropagation(); openTaskModal(proj.id); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>+ Task</button>
+                            <button onClick={(e) => { e.stopPropagation(); openEditProjectModal(proj); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>Edit</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </>
         )}
         {view === 'leads' && currentUser?.role === 'owner' && (
@@ -677,12 +732,18 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      <Modal isOpen={modalType === 'update'} onClose={() => setModalType(null)} title="Log Task Update">
+      <Modal isOpen={modalType === 'update'} onClose={() => { setModalType(null); setFormTaskId(''); setActiveUserId(''); }} title="Log Task Update">
         <form onSubmit={submitUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <select value={formTaskId} onChange={e => setFormTaskId(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
-            <option value="" disabled>Select Active Task</option>
-            {tasks.filter(t => t.assignees?.includes(activeUserId)).map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
-          </select>
+          {activeUserId ? (
+            <select value={formTaskId} onChange={e => setFormTaskId(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="" disabled>Select Active Task</option>
+              {tasks.filter(t => t.assignees?.includes(activeUserId)).map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+            </select>
+          ) : (
+            <div style={{ padding: '12px 16px', background: 'var(--color-zinc-100)', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px', fontWeight: 600, color: 'var(--color-zinc-800)' }}>
+              TARGET TASK: {tasks.find(t => t.id === formTaskId)?.title}
+            </div>
+          )}
           <input type="text" placeholder="Quick Note (e.g. Scoped out the layers)" value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           <button type="submit" className="auth-button">Save Note & Update Timeline</button>
         </form>
@@ -718,14 +779,69 @@ export function Dashboard() {
           {tasksListItems.length === 0 ? (
             <div style={{ color: 'var(--color-zinc-500)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>No active tasks found.</div>
           ) : (
-            tasksListItems.map(t => (
-              <div key={t.id} style={{ padding: '16px', background: 'var(--color-zinc-50)', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-zinc-900)' }}>{t.title}</span>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'white', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--color-zinc-200)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {t.status}
-                </span>
-              </div>
-            ))
+            tasksListItems.map(t => {
+              const taskUpdates = updates
+                .filter(u => u.task_id === t.id)
+                .sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              
+              return (
+                <div key={t.id} style={{ padding: '16px', background: 'var(--color-zinc-50)', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-zinc-900)' }}>{t.title}</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'white', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--color-zinc-200)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {t.status}
+                    </span>
+                  </div>
+                  {taskUpdates.length > 0 ? (
+                    <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {taskUpdates.map((upd, idx) => {
+                        const authorName = users.find(u => u.id === upd.author_id)?.name || 'Manager';
+                        return (
+                          <div key={upd.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: idx < taskUpdates.length - 1 ? '12px' : '0', borderBottom: idx < taskUpdates.length - 1 ? '1px dashed var(--color-zinc-100)' : 'none' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{authorName}</span>
+                              <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>{new Date(upd.created_at).toLocaleDateString()} {new Date(upd.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <span style={{ fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.4' }}>{upd.note}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: 'var(--color-zinc-400)', fontStyle: 'italic', padding: '4px 0' }}>No timeline updates available.</div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </Modal>
+
+      <Modal isOpen={modalType === 'updates-list'} onClose={() => setModalType(null)} title={`Recent Updates: ${updatesListSubject}`}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+          {updatesListItems.length === 0 ? (
+            <div style={{ color: 'var(--color-zinc-500)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>No tracked updates found.</div>
+          ) : (
+            updatesListItems.map(upd => {
+              const taskTitle = tasks.find(t => t.id === upd.task_id)?.title || 'Unknown Task';
+              const authorName = users.find(u => u.id === upd.author_id)?.name || 'Manager';
+              return (
+                <div key={upd.id} style={{ padding: '16px', background: 'var(--color-zinc-50)', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-zinc-900)' }}>{authorName}</span>
+                      <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>via {taskTitle}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-zinc-400)' }}>
+                      {new Date(upd.created_at).toLocaleDateString()} {new Date(upd.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'var(--color-zinc-800)', lineHeight: '1.5' }}>
+                    {upd.note}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </Modal>

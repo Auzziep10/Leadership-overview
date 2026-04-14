@@ -165,18 +165,18 @@ body {
 
 /* Timeline Components */
 .timeline-track {
-  flex: 1;
-  position: relative;
   height: 64px;
   display: flex;
   align-items: center;
   padding: 0 24px;
   margin: 0 16px;
+  position: relative;
+  flex: 1;
 }
 
 .timeline-date {
   position: absolute;
-  top: -16px;
+  top: 12px;
   font-size: 10px;
   font-weight: 700;
 }
@@ -432,5 +432,55 @@ body {
     text-align: center;
     padding: 8px 12px !important;
     white-space: nowrap;
+  }
+}
+
+.project-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  gap: 16px;
+  position: relative;
+}
+
+.project-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--color-zinc-500);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-group-chevron {
+  transition: transform 0.2s;
+  color: var(--color-zinc-400);
+}
+
+@media (max-width: 600px) {
+  .project-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-right: 16px;
+  }
+  
+  .project-group-title {
+    width: 100%;
+  }
+
+  .project-group-header .timeline-track {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .project-group-chevron {
+    position: absolute;
+    top: 0px;
+    right: 0px;
   }
 }

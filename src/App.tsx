@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
   
   if (loading) return null; // No UI flicker during fast checks
   if (!user) return <Navigate to="/login" replace />;
-  if (requireAdmin && user.role === 'staff') return <Navigate to="/" replace />;
+  if (requireAdmin && (user.role !== 'owner' && user.role !== 'admin')) return <Navigate to="/" replace />;
   
   return children;
 };
@@ -26,7 +26,7 @@ export default function App() {
               <ProtectedRoute>
                 <>
                   <TopNav />
-                  <main className="container" style={{ marginTop: '40px' }}>
+                  <main className="container" style={{ marginTop: '24px' }}>
                     <Dashboard />
                   </main>
                 </>
@@ -36,7 +36,7 @@ export default function App() {
               <ProtectedRoute requireAdmin={true}>
                 <>
                   <TopNav />
-                  <main className="container" style={{ marginTop: '40px' }}>
+                  <main className="container" style={{ marginTop: '24px' }}>
                     <TeamHierarchy />
                   </main>
                 </>

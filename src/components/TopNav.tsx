@@ -386,17 +386,9 @@ export function TopNav() {
     const bannerUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
     const avatarUrl = sigProfileUrl || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile';
 
-    const outerWrap = sigTargetPlatform === 'mac'
-      ? `width="800" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; min-width: 800px; max-width: 800px;"`
-      : `width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;"`;
-
-    const innerWrap = sigTargetPlatform === 'mac'
-      ? `width="800" style="width: 100%; min-width: 800px; max-width: 800px;"`
-      : `width="100%" style="width: 100%;"`;
-
-    const imgWrap = sigTargetPlatform === 'mac'
-      ? `width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;"`
-      : `width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;"`;
+    const outerWrap = `width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;"`;
+    const innerWrap = `width="100%" style="width: 100%;"`;
+    const imgWrap = `width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;"`;
 
     return `
 <table cellpadding="0" cellspacing="0" border="0" ${outerWrap}>
@@ -406,10 +398,16 @@ export function TopNav() {
       <table cellpadding="0" cellspacing="0" border="0" ${innerWrap}>
         <tr>
           <td valign="top">
-            ${bakedCompositeUrl ? `
+            ${bakedCompositeUrl ? (sigTargetPlatform === 'mac' ? `
+            <div style="background-image: url('${bakedCompositeUrl}'); background-size: cover; background-position: left top; background-repeat: no-repeat; width: 100%; padding-bottom: 28.33%; border-radius: 12px 12px 0 0;"></div>
+            ` : `
             <img src="${bakedCompositeUrl}" ${imgWrap} alt="Composite Banner" />
+            `) : `
+            ${sigTargetPlatform === 'mac' ? `
+            <div style="background-image: url('${bannerUrl}'); background-size: cover; background-position: left top; background-repeat: no-repeat; width: 100%; padding-bottom: 20%; border-radius: 12px 12px 0 0;"></div>
             ` : `
             <img src="${bannerUrl}" ${imgWrap} alt="Banner" />
+            `}
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                <tr>
                  <td width="48" style="width: 48px;"></td>

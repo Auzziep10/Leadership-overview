@@ -85,8 +85,6 @@ export function TopNav() {
         setSigProfileUrl(user.avatar_url || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile');
         setSigGlobalLogo(''); // placeholder
       }
-      setSigProfileUrl(user.avatar_url || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile');
-      setSigGlobalLogo(''); // placeholder
     }
   }, [user, isSettingsOpen]);
 

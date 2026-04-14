@@ -9,6 +9,23 @@ export interface User {
   avatar_url?: string;
   phone?: string;
   last_seen_notifications?: string;
+  signature_profiles?: SignatureProfile[];
+}
+
+export interface SignatureProfile {
+  id: string;
+  name: string; // The alias e.g., 'Main Signature', 'Holiday Promo', etc
+  title: string;
+  location: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  linkedin: string;
+  website: string;
+  framing: string;
+  profile_url: string;
+  global_banner: string;
+  global_logo: string;
 }
 
 export interface Role {

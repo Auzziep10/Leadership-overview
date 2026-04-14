@@ -60,6 +60,12 @@ export const updateUserRoleAndHierarchy = async (userId: string, role_id: string
   await updateDoc(doc(db, 'users', userId), updates);
 };
 
+export const updateUserSignatureProfiles = async (userId: string, profiles: any[]) => {
+  await updateDoc(doc(db, 'users', userId), {
+    signature_profiles: profiles
+  });
+};
+
 export const updatePersonalDetails = async (userId: string, name: string, email: string, phone: string, newPassword?: string) => {
   const authInstance = getAuth();
   const cUser = authInstance.currentUser;

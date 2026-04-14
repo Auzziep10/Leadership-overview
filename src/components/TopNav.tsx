@@ -5,7 +5,8 @@ import { auth } from '../services/firebaseConfig';
 import { useAuth } from '../services/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Modal } from './Modal';
-import { updateUserAvatar, updatePersonalDetails, uploadSignatureAsset } from '../services/firestoreService';
+import { updateUserAvatar, updatePersonalDetails, uploadSignatureAsset, updateUserSignatureProfiles } from '../services/firestoreService';
+import type { SignatureProfile } from '../types';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 
@@ -40,10 +41,29 @@ export function TopNav() {
   const [sigWebsite, setSigWebsite] = useState('https://wovnapparel.com');
   const [sigFraming, setSigFraming] = useState('Top Aligned');
   const [sigProfileUrl, setSigProfileUrl] = useState('');
-  const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
   const [sigGlobalLogo, setSigGlobalLogo] = useState('');
+  
+  const [signatureProfiles, setSignatureProfiles] = useState<SignatureProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string>('default');
+  const [sigProfileName, setSigProfileName] = useState('Main Signature');
 
+  const [sigGlobalBanner, setSigGlobalBanner] = useState('https://images.unsplash.com/photo-1617056024921-9989a695de93?q=80&w=600&auto=format&fit=crop');
 
+  const loadSignatureProfile = (profile: SignatureProfile, id: string) => {
+    setActiveProfileId(id);
+    setSigProfileName(profile.name);
+    setSigTitle(profile.title || '');
+    setSigLocation(profile.location || '');
+    setSigFullName(profile.full_name || '');
+    setSigPhone(profile.phone || '');
+    setSigEmail(profile.email || '');
+    setSigLinkedin(profile.linkedin || '');
+    setSigWebsite(profile.website || '');
+    setSigFraming(profile.framing || 'Top Aligned');
+    setSigProfileUrl(profile.profile_url || '');
+    if (profile.global_banner) setSigGlobalBanner(profile.global_banner);
+    if (profile.global_logo !== undefined) setSigGlobalLogo(profile.global_logo);
+  };
 
   useEffect(() => {
     if (user && isSettingsOpen) {
@@ -51,11 +71,20 @@ export function TopNav() {
       setPersonalEmail(user.email || '');
       setPersonalPhone(user.phone || '');
       setNewPassword('');
-      setSigTitle(user.role || 'Executive Fulfillment Team');
-      setSigLocation('Rio Rancho, NM');
-      setSigFullName(user.name || '');
-      setSigPhone(user.phone || '5053065100');
-      setSigEmail(user.email || 'austin@catalyst.com.co');
+      
+      const loadedProfiles = user.signature_profiles || [];
+      if (loadedProfiles.length > 0) {
+        setSignatureProfiles(loadedProfiles);
+        loadSignatureProfile(loadedProfiles[0], loadedProfiles[0].id);
+      } else {
+        setSigTitle(user.role || 'Executive Fulfillment Team');
+        setSigLocation('Rio Rancho, NM');
+        setSigFullName(user.name || '');
+        setSigPhone(user.phone || '5053065100');
+        setSigEmail(user.email || 'austin@catalyst.com.co');
+        setSigProfileUrl(user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80');
+        setSigGlobalLogo('https://wovn.vercel.app/wovn-signature-logo.png'); // placeholder
+      }
       setSigProfileUrl(user.avatar_url || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80');
       setSigGlobalLogo('https://wovn.vercel.app/wovn-signature-logo.png'); // placeholder
     }
@@ -145,6 +174,62 @@ export function TopNav() {
       }
     };
     img.src = imageSrc;
+  };
+
+  const handleCreateNewProfile = () => {
+    const newId = Math.random().toString(36).substring(2, 11);
+    setActiveProfileId(newId);
+    setSigProfileName('New Profile ' + (signatureProfiles.length + 1));
+    setSigTitle('');
+    setSigLocation('');
+    setSigFullName('');
+    setSigPhone('');
+    setSigEmail('');
+    setSigLinkedin('https://linkedin.com/');
+    setSigWebsite('https://wovnapparel.com');
+    setSigFraming('Top Aligned');
+    setSigProfileUrl('');
+    // Notice we do NOT clear global banner/logo because they are meant to be global
+  };
+
+  const handleSaveSignatureProfile = async () => {
+    if (!user) return;
+    
+    setIsUpdatingDetails(true);
+    try {
+      const newProfile: SignatureProfile = {
+        id: activeProfileId === 'default' ? Math.random().toString(36).substring(2, 11) : activeProfileId,
+        name: sigProfileName,
+        title: sigTitle,
+        location: sigLocation,
+        full_name: sigFullName,
+        phone: sigPhone,
+        email: sigEmail,
+        linkedin: sigLinkedin,
+        website: sigWebsite,
+        framing: sigFraming,
+        profile_url: sigProfileUrl,
+        global_banner: sigGlobalBanner,
+        global_logo: sigGlobalLogo
+      };
+      
+      const filtered = signatureProfiles.filter(p => p.id !== newProfile.id);
+      const updatedProfiles = [...filtered, newProfile];
+      
+      await updateUserSignatureProfiles(user.id, updatedProfiles);
+      
+      setSignatureProfiles(updatedProfiles);
+      setActiveProfileId(newProfile.id);
+      
+      // Update local context user object to avoid desync on next render cycle
+      user.signature_profiles = updatedProfiles;
+      
+      alert("Signature profile saved globally!");
+    } catch (e: any) {
+      alert("Error saving signature profile: " + e.message);
+    } finally {
+      setIsUpdatingDetails(false);
+    }
   };
 
   const handleSaveDetails = async () => {
@@ -293,7 +378,7 @@ export function TopNav() {
                   image={imageSrc}
                   crop={crop}
                   zoom={zoom}
-                  aspect={1}
+                  aspect={cropAspect}
                   onCropChange={setCrop}
                   onCropComplete={onCropComplete}
                   onZoomChange={setZoom}
@@ -388,14 +473,26 @@ export function TopNav() {
                       <div style={{ display: 'flex', gap: '12px' }}>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                            <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Active Profile</label>
-                           <select style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }}><option>Main Signature</option></select>
+                           <select 
+                             value={activeProfileId}
+                             onChange={e => {
+                               const p = signatureProfiles.find(x => x.id === e.target.value);
+                               if (p) loadSignatureProfile(p, p.id);
+                             }}
+                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }}
+                           >
+                             {signatureProfiles.length === 0 && <option value="default">Main Signature</option>}
+                             {signatureProfiles.map(p => (
+                               <option key={p.id} value={p.id}>{p.name}</option>
+                             ))}
+                           </select>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                           <button style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', background: 'var(--color-zinc-50)', cursor: 'pointer', fontWeight: 600 }}>+</button>
+                           <button onClick={handleCreateNewProfile} style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', background: 'var(--color-zinc-50)', cursor: 'pointer', fontWeight: 600 }}>+</button>
                         </div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                            <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase' }}>Profile Name</label>
-                           <input type="text" value="Main Signature" readOnly style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
+                           <input type="text" value={sigProfileName} onChange={e => setSigProfileName(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--color-zinc-200)', fontSize: '12px', outline: 'none' }} />
                         </div>
                       </div>
 
@@ -455,8 +552,8 @@ export function TopNav() {
                         </div>
                       </div>
 
-                      <button onClick={() => alert("Local configurator state preserved.")} style={{ background: '#000000', color: 'white', fontWeight: 600, padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '12px' }}>
-                        Save My Details
+                      <button onClick={handleSaveSignatureProfile} disabled={isUpdatingDetails} style={{ background: '#000000', color: 'white', fontWeight: 600, padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginTop: '12px' }}>
+                        Save Signature Profile
                       </button>
                     </div>
 

@@ -131,7 +131,7 @@ export function TopNav() {
       return;
     }
 
-    if (target === 'sigBanner') setCropAspect(4);
+    if (target === 'sigBanner') setCropAspect(5);
     else setCropAspect(1);
 
     setCropTarget(target);
@@ -153,7 +153,7 @@ export function TopNav() {
       
       let tw = 400;
       let th = 400;
-      if (cropTarget === 'sigBanner') { tw = 1200; th = 300; }
+      if (cropTarget === 'sigBanner') { tw = 1200; th = 240; }
       else if (cropTarget === 'sigLogo') { tw = 400; th = 100; }
       else if (cropTarget === 'sigProfile') { tw = 400; th = 400; }
 
@@ -273,7 +273,7 @@ export function TopNav() {
 
       const canvas = document.createElement('canvas');
       canvas.width = 1200;
-      canvas.height = 360;
+      canvas.height = 340;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Canvas context failed");
 
@@ -298,8 +298,8 @@ export function TopNav() {
 
       const [bImg, aImg] = await Promise.all([loadImg(bUrl), loadImg(aUrl)]);
 
-      ctx.clearRect(0, 0, 1200, 360);
-      ctx.drawImage(bImg, 0, 0, 1200, 300);
+      ctx.clearRect(0, 0, 1200, 340);
+      ctx.drawImage(bImg, 0, 0, 1200, 240);
 
       const asize = 280;
       const ax = 96;
@@ -365,7 +365,7 @@ export function TopNav() {
                <tr>
                  <td width="48" style="width: 48px;"></td>
                  <td valign="top" style="position: relative;">
-                    <div style="margin-top: -110px;">
+                    <div style="margin-top: -100px;">
                        <img src="${avatarUrl}" width="140" height="140" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #ffffff; display: block; object-fit: cover; background-color: #ffffff;" alt="${sigFullName}" />
                     </div>
                  </td>

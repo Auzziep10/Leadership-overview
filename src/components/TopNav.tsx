@@ -264,6 +264,7 @@ export function TopNav() {
 
   const [baking, setBaking] = useState(false);
   const [readyCompositeUrl, setReadyCompositeUrl] = useState<string | null>(null);
+  const [sigTargetPlatform, setSigTargetPlatform] = useState<'pc' | 'mac'>('pc');
 
   const startBake = async () => {
     if (!user) return;
@@ -385,20 +386,30 @@ export function TopNav() {
     const bannerUrl = sigGlobalBanner || 'https://placehold.co/1200x400/eeeeee/999999?text=Upload+Global+Banner';
     const avatarUrl = sigProfileUrl || 'https://placehold.co/400x400/eeeeee/999999?text=Upload+Profile';
 
+    const outerWrap = sigTargetPlatform === 'mac'
+      ? `width="800" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; min-width: 800px; max-width: 800px;"`
+      : `width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; max-width: 100%;"`;
 
-    
+    const innerWrap = sigTargetPlatform === 'mac'
+      ? `width="800" style="width: 100%; min-width: 800px; max-width: 800px;"`
+      : `width="100%" style="width: 100%;"`;
+
+    const imgWrap = sigTargetPlatform === 'mac'
+      ? `width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;"`
+      : `width="100%" style="width: 100%; height: auto; max-width: 100%; display: block; border-radius: 12px 12px 0 0;"`;
+
     return `
-<table cellpadding="0" cellspacing="0" border="0" width="800" style="font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; width: 100%; min-width: 800px; max-width: 800px;">
+<table cellpadding="0" cellspacing="0" border="0" ${outerWrap}>
   <tr>
     <td style="padding-bottom: 24px;">
       
-      <table cellpadding="0" cellspacing="0" border="0" width="800" style="width: 100%; min-width: 800px; max-width: 800px;">
+      <table cellpadding="0" cellspacing="0" border="0" ${innerWrap}>
         <tr>
           <td valign="top">
             ${bakedCompositeUrl ? `
-            <img src="${bakedCompositeUrl}" width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;" alt="Composite Banner" />
+            <img src="${bakedCompositeUrl}" ${imgWrap} alt="Composite Banner" />
             ` : `
-            <img src="${bannerUrl}" width="800" style="width: 100%; height: auto; min-width: 800px; max-width: 800px; display: block; border-radius: 12px 12px 0 0;" alt="Banner" />
+            <img src="${bannerUrl}" ${imgWrap} alt="Banner" />
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                <tr>
                  <td width="48" style="width: 48px;"></td>
@@ -755,24 +766,30 @@ export function TopNav() {
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-zinc-900)' }}>Live Preview</div>
                         <div style={{ fontSize: '11px', color: 'var(--color-zinc-500)' }}>What you see is what gets copied.</div>
                       </div>
-                      {!readyCompositeUrl ? (
-                        <button 
-                          onClick={startBake}
-                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: baking ? 0.7 : 1 }}
-                          disabled={baking}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                          {baking ? 'Preparing High-Fidelity Signature...' : 'Generate New Signature'}
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={executeSyncCopy}
-                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#22c55e', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                          Confirm & Copy to Clipboard
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        {!readyCompositeUrl ? (
+                          <button 
+                            onClick={startBake}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--color-zinc-900)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: baking ? 0.7 : 1 }}
+                            disabled={baking}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            {baking ? 'Preparing High-Fidelity Signature...' : 'Generate New Signature'}
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={executeSyncCopy}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#22c55e', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Confirm & Copy to Clipboard
+                          </button>
+                        )}
+                        <div style={{ display: 'flex', gap: '4px', background: 'var(--color-zinc-100)', padding: '4px', borderRadius: '6px' }}>
+                           <button onClick={() => setSigTargetPlatform('pc')} style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 600, background: sigTargetPlatform === 'pc' ? 'white' : 'transparent', border: 'none', borderRadius: '4px', boxShadow: sigTargetPlatform === 'pc' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', color: sigTargetPlatform === 'pc' ? 'black' : 'var(--color-zinc-500)', transition: 'all 0.15s ease' }}>100% Fluid (PC/Gmail)</button>
+                           <button onClick={() => setSigTargetPlatform('mac')} style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 600, background: sigTargetPlatform === 'mac' ? 'white' : 'transparent', border: 'none', borderRadius: '4px', boxShadow: sigTargetPlatform === 'mac' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', color: sigTargetPlatform === 'mac' ? 'black' : 'var(--color-zinc-500)', transition: 'all 0.15s ease' }}>Fixed 800px (Apple Mail)</button>
+                        </div>
+                      </div>
                     </div>
 
                     <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', padding: '24px', display: 'flex', justifyContent: 'flex-start', overflowX: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>

@@ -409,7 +409,7 @@ export function TopNav() {
                </tr>
             </table>
 
-            ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="160" style="width: 160px; height: auto; max-width: 160px; display:block; margin-bottom:32px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 900; color: #111111; margin-bottom: 32px; letter-spacing: -0.05em;">WOV/V</div>`}
+            ${sigGlobalLogo ? `<img src="${sigGlobalLogo}" width="120" style="width: 120px; height: auto; max-width: 120px; display:block; margin-bottom:32px;" alt="WOVN" />` : `<div style="font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 900; color: #111111; margin-bottom: 32px; letter-spacing: -0.05em;">WOV/V</div>`}
           </td>
         </tr>
       </table>

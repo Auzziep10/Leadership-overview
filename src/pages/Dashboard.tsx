@@ -5,6 +5,7 @@ import type { TaskUpdate, User, Project, Task } from '../types';
 import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
+import { MobileHub } from '../components/MobileHub';
 
 export function Dashboard() {
   const { user: currentUser } = useAuth();
@@ -18,6 +19,13 @@ export function Dashboard() {
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMode, setMobileMode] = useState(localStorage.getItem('mobile_view_enabled') === 'true');
+
+  useEffect(() => {
+    const handler = () => setMobileMode(localStorage.getItem('mobile_view_enabled') === 'true');
+    window.addEventListener('mobile-view-changed', handler);
+    return () => window.removeEventListener('mobile-view-changed', handler);
+  }, []);
 
   // Modal State
   const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | null>(null);
@@ -395,6 +403,26 @@ export function Dashboard() {
   const isStaff = currentUser?.role !== 'owner' && currentUser?.role !== 'admin';
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '13px', fontWeight: 600 }}>Loading Dashboard...</div>;
+
+  if (mobileMode) {
+    return (
+      <div style={{ marginTop: '16px' }}>
+        <MobileHub projects={projects} tasks={tasks} updates={updates} users={users} currentUser={currentUser || null} />
+        <MobileQuickAdd 
+          users={users} 
+          projects={projects} 
+          currentUser={currentUser}
+          onCreateProject={async (title, desc, end) => { await createProject(title, desc, end); }}
+          onCreateTask={async (projId, title, assignees, actionItem) => {
+             const newTaskId = await createTask(projId, title, assignees, '', '', 'active');
+             if (actionItem && actionItem.trim() !== '') {
+                await addTaskUpdate(newTaskId, currentUser?.id || '', actionItem, true);
+             }
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>

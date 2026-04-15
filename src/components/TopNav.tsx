@@ -32,6 +32,7 @@ export function TopNav() {
 
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [settingsTab, setSettingsTab] = useState<'profile' | 'signature'>('profile');
+  const [mobileView, setMobileView] = useState(localStorage.getItem('mobile_view_enabled') === 'true');
   const [sigTitle, setSigTitle] = useState('');
   const [sigLocation, setSigLocation] = useState('');
   const [sigFullName, setSigFullName] = useState('');
@@ -261,6 +262,14 @@ export function TopNav() {
       setIsUpdatingDetails(false);
     }
   };
+
+  const toggleMobileView = () => {
+    const newState = !mobileView;
+    setMobileView(newState);
+    localStorage.setItem('mobile_view_enabled', String(newState));
+    window.dispatchEvent(new Event('mobile-view-changed'));
+  };
+
 
   const [baking, setBaking] = useState(false);
   const [readyCompositeUrl, setReadyCompositeUrl] = useState<string | null>(null);
@@ -607,6 +616,15 @@ export function TopNav() {
                     
                     <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '16px' }}>Account Security</div>
                     <input type="password" placeholder="New Password (leave blank to keep current)" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', fontSize: '13px' }} />
+
+                    <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', marginTop: '16px' }}>Interface Preferences</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: '8px', border: '2px solid var(--color-zinc-200)', background: mobileView ? 'var(--color-zinc-900)' : 'var(--color-zinc-50)', color: mobileView ? 'white' : 'var(--color-zinc-900)', transition: 'all 0.2s', cursor: 'pointer' }} onClick={toggleMobileView}>
+                       <div style={{ display: 'flex', flexDirection: 'column' }}>
+                         <span style={{ fontSize: '13px', fontWeight: 700 }}>Enable Mobile Hyper-View</span>
+                         <span style={{ fontSize: '11px', color: mobileView ? 'var(--color-zinc-300)' : 'var(--color-zinc-500)' }}>Forces a streamlined, touch-first UI optimized for phones.</span>
+                       </div>
+                       <input type="checkbox" checked={mobileView} readOnly style={{ width: '20px', height: '20px', accentColor: 'var(--color-zinc-900)' }} />
+                    </div>
 
                     <button 
                       onClick={handleSaveDetails}

@@ -158,9 +158,9 @@ export function Dashboard() {
 
   const submitEditProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProject(activeProjectId, formEndDate, formStartDate ? new Date(formStartDate).toISOString() : undefined);
+    await updateProject(activeProjectId, formEndDate, formStartDate ? new Date(formStartDate).toISOString() : undefined, undefined, formTitle, formDesc);
     setModalType(null);
-    setFormEndDate(''); setFormStartDate('');
+    setFormEndDate(''); setFormStartDate(''); setFormTitle(''); setFormDesc('');
     loadDashboardData();
   };
 
@@ -330,6 +330,8 @@ export function Dashboard() {
   const openEditProjectModal = (proj: Project) => {
     setActiveProjectId(proj.id);
     setFormEndDate(proj.end_date || '');
+    setFormTitle(proj.title || '');
+    setFormDesc(proj.description || '');
     // Convert ISO to local datetime string for input
     setFormStartDate(proj.created_at ? new Date(proj.created_at).toISOString().slice(0,16) : '');
     setModalType('edit-project');
@@ -896,8 +898,10 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      <Modal isOpen={modalType === 'edit-project'} onClose={() => setModalType(null)} title="Edit Project Timeline">
+      <Modal isOpen={modalType === 'edit-project'} onClose={() => setModalType(null)} title="Edit Project">
         <form onSubmit={submitEditProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input type="text" placeholder="Project Title" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <textarea placeholder="Description (Optional)" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Project Start Bound (Beginning of Line)</label>
             <input type="datetime-local" value={formStartDate} onChange={e => setFormStartDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
@@ -906,7 +910,7 @@ export function Dashboard() {
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Project Target End Bound (End of Line)</label>
             <input type="date" value={formEndDate} onChange={e => setFormEndDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           </div>
-          <button type="submit" className="auth-button">Update Timeline Parameters</button>
+          <button type="submit" className="auth-button">Save Changes to Project</button>
           <button type="button" onClick={archiveProject} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: '1px solid var(--color-red-600)', color: 'var(--color-red-600)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Archive Project</button>
         </form>
       </Modal>

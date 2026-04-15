@@ -111,11 +111,13 @@ export const createProject = async (title: string, description: string, end_date
   return docRef.id;
 };
 
-export const updateProject = async (projectId: string, end_date?: string, start_date?: string, status?: string) => {
+export const updateProject = async (projectId: string, end_date?: string, start_date?: string, status?: string, title?: string, description?: string) => {
   const updates: any = {};
   if (end_date !== undefined) updates.end_date = end_date || null;
   if (start_date) updates.created_at = start_date;
   if (status) updates.status = status;
+  if (title) updates.title = title;
+  if (description !== undefined) updates.description = description;
   
   await updateDoc(doc(db, 'projects', projectId), updates);
 };

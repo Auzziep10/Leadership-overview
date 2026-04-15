@@ -325,7 +325,7 @@ export function TimelineCard({
         <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
           {onEditDates && (
             <button className="pill-button" onClick={onEditDates} style={{ flex: 1, justifyContent: 'center' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700 }}>Edit Dates</span>
+              <span style={{ fontSize: '11px', fontWeight: 700 }}>Edit Project</span>
             </button>
           )}
 

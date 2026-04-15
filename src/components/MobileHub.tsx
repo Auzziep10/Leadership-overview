@@ -11,6 +11,7 @@ interface MobileHubProps {
 
 export function MobileHub({ projects, tasks, updates, users, currentUser }: MobileHubProps) {
   const [expandedProj, setExpandedProj] = useState<string | null>(null);
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
   const activeProjects = projects.filter(p => p.status === 'active');
   const leadProjects = projects.filter(p => p.status === 'lead');
@@ -51,7 +52,11 @@ export function MobileHub({ projects, tasks, updates, users, currentUser }: Mobi
                            const assignedUsers = users.filter(u => task.assignees?.includes(u.id));
                            
                            return (
-                             <div key={task.id} style={{ background: 'white', border: '2px solid var(--color-zinc-200)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                             <div 
+                               key={task.id} 
+                               onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                               style={{ background: 'white', border: '2px solid var(--color-zinc-200)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: expandedTask === task.id ? '0 8px 24px -8px rgba(0,0,0,0.15)' : 'none' }}
+                             >
                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-zinc-900)' }}>{task.title}</span>
                                  <span style={{ fontSize: '11px', fontWeight: 800, padding: '6px 10px', borderRadius: '6px', background: task.status === 'done' ? '#22c55e' : 'var(--color-zinc-200)', color: task.status === 'done' ? 'white' : 'var(--color-zinc-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -69,13 +74,37 @@ export function MobileHub({ projects, tasks, updates, users, currentUser }: Mobi
                                  </div>
                                )}
                                
-                               {topUpdate && (
-                                 <div style={{ background: topUpdate.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px', border: topUpdate.is_action_item ? '2px solid var(--color-red-200)' : '2px solid var(--color-zinc-200)' }}>
-                                    <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: topUpdate.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                                      {topUpdate.is_action_item ? '🚨 Action Item Directive' : 'Latest Timeline Update'}
-                                    </div>
-                                    <div style={{ fontSize: '15px', color: 'var(--color-zinc-900)', lineHeight: '1.5', fontWeight: 500 }}>{topUpdate.note}</div>
+                               {expandedTask === task.id ? (
+                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px', borderTop: '1px solid var(--color-zinc-100)', paddingTop: '16px' }}>
+                                   <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>All Timeline Updates</div>
+                                   {taskUpdates.length === 0 ? (
+                                      <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', fontStyle: 'italic', textAlign: 'center', padding: '12px' }}>No updates logged.</div>
+                                   ) : taskUpdates.map(upd => {
+                                      const uAuthor = users.find(u => u.id === upd.author_id);
+                                      return (
+                                        <div key={upd.id} style={{ background: upd.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px', border: upd.is_action_item ? '2px solid var(--color-red-200)' : '1px solid var(--color-zinc-200)' }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: 800, color: upd.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-600)', textTransform: 'uppercase' }}>
+                                              {uAuthor?.name || 'System'} {upd.is_action_item && '🚨 DIRECTIVE'}
+                                            </span>
+                                            <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
+                                              {new Date(upd.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                          </div>
+                                          <div style={{ fontSize: '14px', color: 'var(--color-zinc-900)', lineHeight: '1.4', fontWeight: 500 }}>{upd.note}</div>
+                                        </div>
+                                      );
+                                   })}
                                  </div>
+                               ) : (
+                                 topUpdate && (
+                                   <div style={{ background: topUpdate.is_action_item ? 'var(--color-red-50)' : 'var(--color-zinc-50)', padding: '16px', borderRadius: '12px', border: topUpdate.is_action_item ? '2px solid var(--color-red-200)' : '2px solid var(--color-zinc-200)' }}>
+                                      <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: topUpdate.is_action_item ? 'var(--color-red-600)' : 'var(--color-zinc-500)', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                                        {topUpdate.is_action_item ? '🚨 Action Item Directive' : 'Latest Timeline Update'}
+                                      </div>
+                                      <div style={{ fontSize: '15px', color: 'var(--color-zinc-900)', lineHeight: '1.5', fontWeight: 500 }}>{topUpdate.note}</div>
+                                   </div>
+                                 )
                                )}
                              </div>
                            );

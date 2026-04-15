@@ -4,6 +4,7 @@ import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task } from '../types';
 import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
+import { MobileQuickAdd } from '../components/MobileQuickAdd';
 
 export function Dashboard() {
   const { user: currentUser } = useAuth();
@@ -1188,6 +1189,19 @@ export function Dashboard() {
           <button type="submit" className="auth-button">Confirm Advancement</button>
         </form>
       </Modal>
+
+      <MobileQuickAdd 
+        users={users} 
+        projects={projects} 
+        currentUser={currentUser}
+        onCreateProject={async (title, desc, end) => { await createProject(title, desc, end); /* trigger effect handles reload */ }}
+        onCreateTask={async (projId, title, assignees, actionItem) => {
+           const newTaskId = await createTask(projId, title, assignees, '', '', 'active');
+           if (actionItem && actionItem.trim() !== '') {
+              await addTaskUpdate(newTaskId, currentUser?.id || '', actionItem, true);
+           }
+        }}
+      />
     </div>
   );
 }

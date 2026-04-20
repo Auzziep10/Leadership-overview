@@ -69,6 +69,8 @@ interface TimelineCardProps {
   onActionItemProgressClick?: (updateId: string, taskId: string, pct: number) => void;
   onUpdateTask?: (taskId: string, updates: any) => void;
   onProgressClick?: (taskId: string, pct: number) => void;
+  onDeleteUpdate?: (updateId: string) => void;
+  onDeleteMessage?: (updateId: string, thread: any[]) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
   projects?: { id: string; title: string, [key: string]: any }[];
   groupByProject?: boolean;
@@ -103,6 +105,8 @@ export function TimelineCard({
   onActionItemProgressClick,
   onUpdateTask,
   onProgressClick,
+  onDeleteUpdate,
+  onDeleteMessage,
   projects = [],
   groupByProject = false,
   tasks = [],
@@ -440,7 +444,7 @@ export function TimelineCard({
                       ) : (
                         (() => {
                           const renderNodeItem = (n: TaskUpdate, isDraggable: boolean = false) => {
-                            const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
+                            const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : 'Management');
                             const messages = [...(n.thread || [])];
                             if (!n.thread && n.admin_reply) {
                               messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
@@ -449,6 +453,7 @@ export function TimelineCard({
                               }
                             }
                             const canReply = true;
+                            const canDeleteUpdate = n.author_id === currentUser?.id || currentUser?.role === 'admin' || currentUser?.role === 'owner';
 
                             const content = (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', padding: '16px', border: n.is_action_item ? '1px solid var(--color-zinc-300)' : '1px solid var(--color-zinc-200)', borderRadius: '12px', boxShadow: '0 2px 4px -2px rgba(0,0,0,0.02)', cursor: isDraggable ? 'grab' : 'default' }}>
@@ -502,6 +507,17 @@ export function TimelineCard({
                                     <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>
                                       {format(new Date(n.created_at), 'MMM d, yyyy - h:mm a')}
                                     </div>
+                                    {canDeleteUpdate && onDeleteUpdate && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); onDeleteUpdate(n.id); }}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--color-red-400)', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        title="Delete Log"
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-red-50)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                                 
@@ -576,17 +592,28 @@ export function TimelineCard({
                                                         </span>
                                                       )}
                                                     </div>
-                                                    
-                                                    {onReplyClick && (
-                                                      <button 
-                                                        onClick={() => onReplyClick(n.id, `@${mAuthorName.split(' ')[0]} `, msg.id)} 
-                                                        style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-zinc-700)'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-zinc-400)'}
-                                                      >
-                                                        Reply
-                                                      </button>
-                                                    )}
+                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                      {onReplyClick && (
+                                                        <button 
+                                                          onClick={() => onReplyClick(n.id, `@${mAuthorName.split(' ')[0]} `, msg.id)} 
+                                                          style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}
+                                                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-zinc-700)'}
+                                                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-zinc-400)'}
+                                                        >
+                                                          Reply
+                                                        </button>
+                                                      )}
+                                                      {(msg.author_id === currentUser?.id || currentUser?.role === 'admin' || currentUser?.role === 'owner') && onDeleteMessage && (
+                                                        <button 
+                                                          onClick={(e) => { e.stopPropagation(); onDeleteMessage(n.id, n.thread ? n.thread.filter((m: any) => m.id !== msg.id) : []); }}
+                                                          style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-red-400)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}
+                                                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-red-600)'}
+                                                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-red-400)'}
+                                                        >
+                                                          Delete
+                                                        </button>
+                                                      )}
+                                                    </div>
                                                   </strong>
                                                   <span>{actualMessage}</span>
                                                 </div>
@@ -748,7 +775,7 @@ export function TimelineCard({
                 <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>No logged updates yet.</div>
               ) : (
                 nodes.map(n => {
-                  const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : n.author_id);
+                  const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : 'Management');
                   const messages = [...(n.thread || [])];
                   if (!n.thread && n.admin_reply) {
                     messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });

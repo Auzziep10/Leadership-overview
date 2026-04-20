@@ -280,3 +280,13 @@ export const addThreadMessage = async (updateId: string, authorId: string, messa
     thread: arrayUnion(newMessage)
   });
 };
+
+export const deleteTaskUpdate = async (updateId: string) => {
+  await deleteDoc(doc(db, 'task_updates', updateId));
+};
+
+export const removeThreadMessage = async (updateId: string, thread: any[]) => {
+  await updateDoc(doc(db, 'task_updates', updateId), {
+    thread
+  });
+};

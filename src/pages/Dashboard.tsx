@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task, Organization } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
 import { MobileHub } from '../components/MobileHub';
@@ -617,6 +617,14 @@ export function Dashboard() {
                     setProgressLogPct(pct);
                     setModalType('progress-log');
                   }}
+                  onDeleteUpdate={async (updateId) => {
+                    const confirm = window.confirm("Are you sure you want to delete this log?");
+                    if (confirm) await deleteTaskUpdate(updateId);
+                  }}
+                  onDeleteMessage={async (updateId, thread) => {
+                    const confirm = window.confirm("Are you sure you want to delete this message?");
+                    if (confirm) await removeThreadMessage(updateId, thread);
+                  }}
                 />
               );
             })}
@@ -731,6 +739,14 @@ export function Dashboard() {
                       setProgressLogTaskId(taskId);
                       setProgressLogPct(pct);
                       setModalType('progress-log');
+                    }}
+                    onDeleteUpdate={async (updateId) => {
+                      const confirm = window.confirm("Are you sure you want to delete this log?");
+                      if (confirm) await deleteTaskUpdate(updateId);
+                    }}
+                    onDeleteMessage={async (updateId, thread) => {
+                      const confirm = window.confirm("Are you sure you want to delete this message?");
+                      if (confirm) await removeThreadMessage(updateId, thread);
                     }}
                   />
                 ) : (

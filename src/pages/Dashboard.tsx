@@ -805,16 +805,23 @@ export function Dashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                   {organizations.map(org => {
                     const orgProjects = activeFilteredProjects.filter(p => p.organization_id === org.id);
-                    if (orgProjects.length === 0) return null;
                     return (
                       <div key={org.id} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-zinc-900)', borderBottom: '2px solid var(--color-zinc-200)', paddingBottom: '8px' }}>
-                          {org.name}
-                          <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-zinc-500)', fontWeight: 600 }}>{orgProjects.length} Projects</span>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-zinc-900)', borderBottom: '2px solid var(--color-zinc-200)', paddingBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            {org.name}
+                            <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-zinc-500)', fontWeight: 600 }}>{orgProjects.length} Projects</span>
+                          </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
-                          {orgProjects.map(renderProjectCard)}
-                        </div>
+                        {orgProjects.length > 0 ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
+                            {orgProjects.map(renderProjectCard)}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', padding: '24px', background: 'var(--color-zinc-50)', borderRadius: '16px', textAlign: 'center', border: '1px dashed var(--color-zinc-200)' }}>
+                            No active projects in this organization.
+                          </div>
+                        )}
                       </div>
                     );
                   })}

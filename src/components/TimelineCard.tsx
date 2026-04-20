@@ -73,6 +73,7 @@ interface TimelineCardProps {
   projects?: { id: string; title: string, [key: string]: any }[];
   groupByProject?: boolean;
   assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; project_id?: string; }[];
+  organizations?: { id: string; name: string }[];
 }
 
 export function TimelineCard({
@@ -105,7 +106,8 @@ export function TimelineCard({
   projects = [],
   groupByProject = false,
   tasks = [],
-  assignedTasks = []
+  assignedTasks = [],
+  organizations = []
 }: TimelineCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -691,7 +693,14 @@ export function TimelineCard({
                 
                 return Object.entries(grouped).map(([pid, pTasks]) => {
                   const pObj = projects.find(p => p.id === pid);
-                  const pName = pObj?.title || 'Standalone Tasks';
+                  
+                  let pName = pObj?.title || 'Standalone Tasks';
+                  if (pObj && pObj.organization_id && organizations.length > 0) {
+                    const org = organizations.find(o => o.id === pObj.organization_id);
+                    if (org) {
+                      pName = `${org.name} - ${pName}`;
+                    }
+                  }
 
                   const pStart = pObj?.created_at ? new Date(pObj.created_at).getTime() : tStart;
                   const pEnd = pObj?.end_date ? new Date(pObj.end_date).getTime() : tEnd;

@@ -590,6 +590,7 @@ export function Dashboard() {
                   startDate={shiftStart.toISOString()}
                   endDate={shiftEnd.toISOString()}
                   projects={projects}
+                  organizations={organizations}
                   groupByProject={true}
                   users={users}
                   tasks={tasks}

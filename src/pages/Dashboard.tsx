@@ -10,7 +10,7 @@ import { MobileHub } from '../components/MobileHub';
 export function Dashboard() {
   const { user: currentUser } = useAuth();
   const [view, setView] = useState<'team' | 'projects' | 'leads' | 'metrics' | 'archives' | 'pulse'>('team');
-  const [projectViewType, setProjectViewType] = useState<'list' | 'grid'>('list');
+  const [projectViewType, setProjectViewType] = useState<'list' | 'grid' | 'org'>('list');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -673,131 +673,172 @@ export function Dashboard() {
             </div>
           </div>
         )}
-        {view === 'projects' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', gap: '4px', background: 'var(--color-zinc-100)', padding: '4px', borderRadius: '8px' }}>
-                <button onClick={() => setProjectViewType('list')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'list' ? 'white' : 'transparent', color: projectViewType === 'list' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>List View</button>
-                <button onClick={() => setProjectViewType('grid')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'grid' ? 'white' : 'transparent', color: projectViewType === 'grid' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Grid View</button>
-              </div>
-              {!isStaff && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => setModalType('organization')} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: 'transparent', color: 'var(--color-zinc-500)', border: '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>New Organization</button>
-                  <button onClick={() => setShowArchives(!showArchives)} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: showArchives ? 'var(--color-zinc-900)' : 'transparent', color: showArchives ? 'white' : 'var(--color-zinc-500)', border: showArchives ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>{showArchives ? 'Hide Archives' : 'Data Archives'}</button>
-                  <button 
-                    onClick={() => setModalType('project')}
-                    style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 20px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-zinc-100)'}>
-                    New Project +
-                  </button>
-                </div>
-              )}
-            </div>
-            {projects.filter(p => p.status !== 'lead').length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
-            <div style={projectViewType === 'list' ? { display: 'flex', flexDirection: 'column', gap: '8px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
-              {projects.filter(p => p.status !== 'lead').filter(proj => {
-                if (!searchQuery) return true;
-                const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
-                const pTasks = tasks.filter(t => t.project_id === proj.id);
-                const matchTasks = pTasks.some(t => t.title.toLowerCase().includes(searchQuery));
-                const assignedUserIds = new Set(pTasks.flatMap(t => t.assignees || []));
-                const matchStaff = users.some(u => assignedUserIds.has(u.id) && (u.name.toLowerCase().includes(searchQuery) || u.role?.toLowerCase().includes(searchQuery)));
-                return matchProj || matchTasks || matchStaff;
-              }).map(proj => {
-                // Get tasks for this project
-                const projTasks = tasks.filter(t => t.project_id === proj.id);
-                // Get all updates for this project's tasks
-                const projUpdates = updates.filter(update => projTasks.some(t => t.id === update.task_id));
-                
-                return (
-                  <div key={proj.id} style={{ position: 'relative' }}>
-                    {projectViewType === 'list' ? (
-                      <TimelineCard 
-                        initials={proj.title.charAt(0).toUpperCase()} 
-                        title={`${proj.title}${proj.organization_id ? ` • ${organizations.find(o => o.id === proj.organization_id)?.name || ''}` : ''}`} 
-                        subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
-                        color="#18181b" 
-                        updates={projUpdates}
-                        {...(!isStaff ? {
-                          action1Label: "Add Task",
-                          onAction1: () => openTaskModal(proj.id),
-                          action2Label: "View All Tasks",
-                          onAction2: () => openTasksList(`Project (${proj.title})`, projTasks),
-                          onEditDates: () => openEditProjectModal(proj)
-                        } : {})}
-                        startDate={proj.created_at}
-                        endDate={proj.end_date}
-                        users={users}
-                        tasks={tasks}
-                        assignedTasks={projTasks}
-                        currentUser={currentUser}
-                        onReplyClick={openReplyModal}
-                        onLogActionItemClick={openActionItemLogModal}
-                        onEditTask={openEditTaskModal}
-                        onActionItem={openActionItemModal}
-                        onLogUpdateClick={openTaskUpdateModal}
-                        onReorderTasks={handleReorderTasks}
-                        onReorderUpdates={handleReorderUpdates}
-                        onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
-                        onActionItemProgressClick={(updateId, taskId, pct) => {
-                          setProgressLogActionItemId(updateId);
-                          setProgressLogTaskId(taskId);
-                          setProgressLogPct(pct);
-                          setModalType('progress-log');
-                        }}
-                        onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
-                        onProgressClick={(taskId, pct) => {
-                          setProgressLogActionItemId('');
-                          setProgressLogTaskId(taskId);
-                          setProgressLogPct(pct);
-                          setModalType('progress-log');
-                        }}
-                      />
-                    ) : (
-                      <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.05)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.02)'; }}
-                        onClick={() => openTasksList(`Project (${proj.title})`, projTasks)}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ flex: '0 0 48px', height: '48px', borderRadius: '12px', background: 'var(--color-zinc-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, fontFamily: 'var(--font-serif)' }}>
-                            {proj.title.charAt(0).toUpperCase()}
-                          </div>
-                          <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-zinc-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.title}</div>
-                            {proj.organization_id && (
-                              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', marginTop: '2px' }}>
-                                {organizations.find(o => o.id === proj.organization_id)?.name || ''}
-                              </div>
-                            )}
-                            <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>{projTasks.length} Active Tasks</div>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '12px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>{proj.status.toUpperCase()}</div>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
-                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Update</div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>
-                              {projUpdates.length > 0 ? new Date(projUpdates[0].created_at).toLocaleDateString() : 'None'}
-                            </div>
-                          </div>
-                        </div>
-                        {!isStaff && (
-                          <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-                            <button onClick={(e) => { e.stopPropagation(); openTaskModal(proj.id); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>+ Task</button>
-                            <button onClick={(e) => { e.stopPropagation(); openEditProjectModal(proj); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>Edit</button>
+        {view === 'projects' && (() => {
+          const activeFilteredProjects = projects.filter(p => p.status !== 'lead').filter(proj => {
+            if (!searchQuery) return true;
+            const matchProj = proj.title.toLowerCase().includes(searchQuery) || (proj.description && proj.description.toLowerCase().includes(searchQuery));
+            const pTasks = tasks.filter(t => t.project_id === proj.id);
+            const matchTasks = pTasks.some(t => t.title.toLowerCase().includes(searchQuery));
+            const assignedUserIds = new Set(pTasks.flatMap(t => t.assignees || []));
+            const matchStaff = users.some(u => assignedUserIds.has(u.id) && (u.name.toLowerCase().includes(searchQuery) || u.role?.toLowerCase().includes(searchQuery)));
+            return matchProj || matchTasks || matchStaff;
+          });
+
+          const renderProjectCard = (proj: Project) => {
+            const projTasks = tasks.filter(t => t.project_id === proj.id);
+            const projUpdates = updates.filter(update => projTasks.some(t => t.id === update.task_id));
+            
+            return (
+              <div key={proj.id} style={{ position: 'relative' }}>
+                {projectViewType === 'list' ? (
+                  <TimelineCard 
+                    initials={proj.title.charAt(0).toUpperCase()} 
+                    title={`${proj.title}${proj.organization_id ? ` • ${organizations.find(o => o.id === proj.organization_id)?.name || ''}` : ''}`} 
+                    subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
+                    color="#18181b" 
+                    updates={projUpdates}
+                    {...(!isStaff ? {
+                      action1Label: "Add Task",
+                      onAction1: () => openTaskModal(proj.id),
+                      action2Label: "View All Tasks",
+                      onAction2: () => openTasksList(`Project (${proj.title})`, projTasks),
+                      onEditDates: () => openEditProjectModal(proj)
+                    } : {})}
+                    startDate={proj.created_at}
+                    endDate={proj.end_date}
+                    users={users}
+                    tasks={tasks}
+                    assignedTasks={projTasks}
+                    currentUser={currentUser}
+                    onReplyClick={openReplyModal}
+                    onLogActionItemClick={openActionItemLogModal}
+                    onEditTask={openEditTaskModal}
+                    onActionItem={openActionItemModal}
+                    onLogUpdateClick={openTaskUpdateModal}
+                    onReorderTasks={handleReorderTasks}
+                    onReorderUpdates={handleReorderUpdates}
+                    onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); loadDashboardData(); }}
+                    onActionItemProgressClick={(updateId, taskId, pct) => {
+                      setProgressLogActionItemId(updateId);
+                      setProgressLogTaskId(taskId);
+                      setProgressLogPct(pct);
+                      setModalType('progress-log');
+                    }}
+                    onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
+                    onProgressClick={(taskId, pct) => {
+                      setProgressLogActionItemId('');
+                      setProgressLogTaskId(taskId);
+                      setProgressLogPct(pct);
+                      setModalType('progress-log');
+                    }}
+                  />
+                ) : (
+                  <div style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.05)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.02)'; }}
+                    onClick={() => openTasksList(`Project (${proj.title})`, projTasks)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ flex: '0 0 48px', height: '48px', borderRadius: '12px', background: 'var(--color-zinc-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, fontFamily: 'var(--font-serif)' }}>
+                        {proj.title.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-zinc-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.title}</div>
+                        {proj.organization_id && (
+                          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', marginTop: '2px' }}>
+                            {organizations.find(o => o.id === proj.organization_id)?.name || ''}
                           </div>
                         )}
+                        <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>{projTasks.length} Active Tasks</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-zinc-50)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>{proj.status.toUpperCase()}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Update</div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-700)' }}>
+                          {projUpdates.length > 0 ? new Date(projUpdates[0].created_at).toLocaleDateString() : 'None'}
+                        </div>
+                      </div>
+                    </div>
+                    {!isStaff && (
+                      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                        <button onClick={(e) => { e.stopPropagation(); openTaskModal(proj.id); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>+ Task</button>
+                        <button onClick={(e) => { e.stopPropagation(); openEditProjectModal(proj); }} style={{ flex: 1, padding: '8px', background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', color: 'var(--color-zinc-600)' }} onMouseEnter={e => { e.currentTarget.style.background='var(--color-zinc-50)'; e.currentTarget.style.color='var(--color-zinc-900)'; }} onMouseLeave={e => { e.currentTarget.style.background='white'; e.currentTarget.style.color='var(--color-zinc-600)'; }}>Edit</button>
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </div>
+            );
+          };
+
+          return (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '4px', background: 'var(--color-zinc-100)', padding: '4px', borderRadius: '8px' }}>
+                  <button onClick={() => setProjectViewType('list')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'list' ? 'white' : 'transparent', color: projectViewType === 'list' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>List View</button>
+                  <button onClick={() => setProjectViewType('grid')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'grid' ? 'white' : 'transparent', color: projectViewType === 'grid' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Grid View</button>
+                  <button onClick={() => setProjectViewType('org')} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, background: projectViewType === 'org' ? 'white' : 'transparent', color: projectViewType === 'org' ? 'black' : 'var(--color-zinc-500)', border: 'none', borderRadius: '6px', cursor: 'pointer', boxShadow: projectViewType === 'org' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}>Org View</button>
+                </div>
+                {!isStaff && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => setModalType('organization')} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: 'transparent', color: 'var(--color-zinc-500)', border: '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>New Organization</button>
+                    <button onClick={() => setShowArchives(!showArchives)} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: showArchives ? 'var(--color-zinc-900)' : 'transparent', color: showArchives ? 'white' : 'var(--color-zinc-500)', border: showArchives ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>{showArchives ? 'Hide Archives' : 'Data Archives'}</button>
+                    <button 
+                      onClick={() => setModalType('project')}
+                      style={{ background: 'var(--color-zinc-100)', border: '1px solid var(--color-zinc-200)', padding: '8px 20px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-zinc-100)'}>
+                      New Project +
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {activeFilteredProjects.length === 0 && <div style={{ fontSize: '12px', color: 'var(--color-zinc-500)', textAlign: 'center' }}>No projects accessible yet.</div>}
+              
+              {projectViewType === 'org' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                  {organizations.map(org => {
+                    const orgProjects = activeFilteredProjects.filter(p => p.organization_id === org.id);
+                    if (orgProjects.length === 0) return null;
+                    return (
+                      <div key={org.id} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-zinc-900)', borderBottom: '2px solid var(--color-zinc-200)', paddingBottom: '8px' }}>
+                          {org.name}
+                          <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-zinc-500)', fontWeight: 600 }}>{orgProjects.length} Projects</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
+                          {orgProjects.map(renderProjectCard)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(() => {
+                    const independent = activeFilteredProjects.filter(p => !p.organization_id);
+                    if (independent.length === 0) return null;
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-zinc-900)', borderBottom: '2px solid var(--color-zinc-200)', paddingBottom: '8px' }}>
+                          Independent Projects
+                          <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-zinc-500)', fontWeight: 600 }}>{independent.length} Projects</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
+                          {independent.map(renderProjectCard)}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div style={projectViewType === 'list' ? { display: 'flex', flexDirection: 'column', gap: '8px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px', alignItems: 'start' }}>
+                  {activeFilteredProjects.map(renderProjectCard)}
+                </div>
+              )}
             
             {showArchives && !isStaff && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '32px', paddingTop: '32px', borderTop: '2px dashed var(--color-zinc-200)' }}>
@@ -831,8 +872,9 @@ export function Dashboard() {
               </div>
             )}
           </>
-        )}
-        {view === 'leads' && currentUser?.role === 'owner' && (
+        );
+      })()}
+      {view === 'leads' && currentUser?.role === 'owner' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
               <button 

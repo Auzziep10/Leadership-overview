@@ -34,6 +34,12 @@ export interface Role {
   level: number; // 0 = Owner/Top, 1 = Executive, 2 = Manager, etc.
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -43,6 +49,7 @@ export interface Project {
   status: 'active' | 'completed' | 'archived' | 'lead';
   customer_company?: string;
   customer_email?: string;
+  organization_id?: string;
 }
 
 export interface Task {

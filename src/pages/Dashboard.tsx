@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
-import type { TaskUpdate, User, Project, Task } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
+import type { TaskUpdate, User, Project, Task, Organization } from '../types';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
 import { MobileHub } from '../components/MobileHub';
@@ -14,6 +14,7 @@ export function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
   const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
@@ -28,7 +29,7 @@ export function Dashboard() {
   }, []);
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | 'organization' | null>(null);
   const [showArchives, setShowArchives] = useState(false);
   const [progressLogTaskId, setProgressLogTaskId] = useState('');
   const [progressLogActionItemId, setProgressLogActionItemId] = useState('');
@@ -57,6 +58,8 @@ export function Dashboard() {
   const [formTaskStatus, setFormTaskStatus] = useState('');
   const [formTaskProjectId, setFormTaskProjectId] = useState('');
   const [formActionItems, setFormActionItems] = useState<string[]>([]);
+  const [formOrganizationId, setFormOrganizationId] = useState('');
+  const [formOrgName, setFormOrgName] = useState('');
   
   const [formLeadName, setFormLeadName] = useState('');
   const [formLeadCompany, setFormLeadCompany] = useState('');
@@ -74,12 +77,14 @@ export function Dashboard() {
     let allP: Project[] = [];
     let allT: Task[] = [];
     let allUpd: TaskUpdate[] = [];
+    let allO: Organization[] = [];
 
     const processData = () => {
       const isStaff = currentUser.role !== 'owner' && currentUser.role !== 'admin';
       let u = [...allU];
       let p = [...allP];
       let t = [...allT];
+      setOrganizations([...allO]);
 
       if (!isStaff) {
         setArchivedProjects(p.filter(proj => proj.status === 'archived'));
@@ -133,6 +138,7 @@ export function Dashboard() {
     const unsubP = subscribeToProjects((data) => { allP = data; processData(); });
     const unsubT = subscribeToTasks((data) => { allT = data; processData(); });
     const unsubUpd = subscribeToAllTaskUpdates((data) => { allUpd = data; processData(); });
+    const unsubO = subscribeToOrganizations((data) => { allO = data; processData(); });
     
     // Listen for TopNav calls
     const handleOpenProject = () => setModalType('project');
@@ -144,7 +150,7 @@ export function Dashboard() {
     window.addEventListener('notifications-cleared', handleClearing);
     
     return () => {
-      unsubU(); unsubP(); unsubT(); unsubUpd();
+      unsubU(); unsubP(); unsubT(); unsubUpd(); unsubO();
       window.removeEventListener('open-create-project', handleOpenProject);
       window.removeEventListener('global-search', handleSearch);
       window.removeEventListener('notifications-cleared', handleClearing);
@@ -157,9 +163,9 @@ export function Dashboard() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await createProject(formTitle, formDesc, formEndDate);
+      await createProject(formTitle, formDesc, formEndDate, formOrganizationId);
       setModalType(null);
-      setFormTitle(''); setFormDesc(''); setFormEndDate('');
+      setFormTitle(''); setFormDesc(''); setFormEndDate(''); setFormOrganizationId('');
     } finally {
       setIsSubmitting(false);
     }
@@ -167,10 +173,23 @@ export function Dashboard() {
 
   const submitEditProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProject(activeProjectId, formEndDate, formStartDate ? new Date(formStartDate).toISOString() : undefined, undefined, formTitle, formDesc);
+    await updateProject(activeProjectId, formEndDate, formStartDate ? new Date(formStartDate).toISOString() : undefined, undefined, formTitle, formDesc, formOrganizationId);
     setModalType(null);
-    setFormEndDate(''); setFormStartDate(''); setFormTitle(''); setFormDesc('');
+    setFormEndDate(''); setFormStartDate(''); setFormTitle(''); setFormDesc(''); setFormOrganizationId('');
     loadDashboardData();
+  };
+
+  const submitOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createOrganization(formOrgName);
+      setModalType(null);
+      setFormOrgName('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const archiveProject = async () => {
@@ -341,6 +360,7 @@ export function Dashboard() {
     setFormEndDate(proj.end_date || '');
     setFormTitle(proj.title || '');
     setFormDesc(proj.description || '');
+    setFormOrganizationId(proj.organization_id || '');
     // Convert ISO to local datetime string for input
     setFormStartDate(proj.created_at ? new Date(proj.created_at).toISOString().slice(0,16) : '');
     setModalType('edit-project');
@@ -662,6 +682,7 @@ export function Dashboard() {
               </div>
               {!isStaff && (
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => setModalType('organization')} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: 'transparent', color: 'var(--color-zinc-500)', border: '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>New Organization</button>
                   <button onClick={() => setShowArchives(!showArchives)} style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, background: showArchives ? 'var(--color-zinc-900)' : 'transparent', color: showArchives ? 'white' : 'var(--color-zinc-500)', border: showArchives ? '1px solid var(--color-zinc-900)' : '1px solid var(--color-zinc-200)', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s' }}>{showArchives ? 'Hide Archives' : 'Data Archives'}</button>
                   <button 
                     onClick={() => setModalType('project')}
@@ -694,7 +715,7 @@ export function Dashboard() {
                     {projectViewType === 'list' ? (
                       <TimelineCard 
                         initials={proj.title.charAt(0).toUpperCase()} 
-                        title={proj.title} 
+                        title={`${proj.title}${proj.organization_id ? ` • ${organizations.find(o => o.id === proj.organization_id)?.name || ''}` : ''}`} 
                         subtitle={`PROJECT STATUS: ${proj.status.toUpperCase()} | ${projTasks.length} TASKS`} 
                         color="#18181b" 
                         updates={projUpdates}
@@ -745,6 +766,11 @@ export function Dashboard() {
                           </div>
                           <div style={{ flex: 1, overflow: 'hidden' }}>
                             <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-zinc-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.title}</div>
+                            {proj.organization_id && (
+                              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-500)', marginTop: '2px' }}>
+                                {organizations.find(o => o.id === proj.organization_id)?.name || ''}
+                              </div>
+                            )}
                             <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>{projTasks.length} Active Tasks</div>
                           </div>
                         </div>
@@ -918,6 +944,13 @@ export function Dashboard() {
       <Modal isOpen={modalType === 'project'} onClose={() => setModalType(null)} title="Create New Project">
         <form onSubmit={submitProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="text" placeholder="Project Title" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Associated Organization (Optional)</label>
+            <select value={formOrganizationId} onChange={e => setFormOrganizationId(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="">No Organization</option>
+              {organizations.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
           <textarea placeholder="Description (Optional)" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Project Target End Date (Optional)</label>
@@ -930,6 +963,13 @@ export function Dashboard() {
       <Modal isOpen={modalType === 'edit-project'} onClose={() => setModalType(null)} title="Edit Project">
         <form onSubmit={submitEditProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="text" placeholder="Project Title" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Associated Organization (Optional)</label>
+            <select value={formOrganizationId} onChange={e => setFormOrganizationId(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', background: 'white' }}>
+              <option value="">No Organization</option>
+              {organizations.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
           <textarea placeholder="Description (Optional)" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Project Start Bound (Beginning of Line)</label>
@@ -1215,6 +1255,13 @@ export function Dashboard() {
           </div>
           <textarea placeholder="Describe what progressed..." value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
           <button type="submit" className="auth-button">Confirm Advancement</button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={modalType === 'organization'} onClose={() => { setModalType(null); setFormOrgName(''); }} title="Create Organization">
+        <form onSubmit={submitOrganization} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input type="text" placeholder="Organization Name" value={formOrgName} onChange={e => setFormOrgName(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Organization'}</button>
         </form>
       </Modal>
 

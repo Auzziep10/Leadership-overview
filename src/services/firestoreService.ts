@@ -3,7 +3,7 @@ import { db, storage, firebaseConfig } from './firebaseConfig';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
-import type { User, Role, Project, Task, TaskUpdate } from '../types';
+import type { User, Role, Project, Task, TaskUpdate, Organization } from '../types';
 
 export const uploadSignatureAsset = async (base64String: string): Promise<string> => {
   const fileName = `signatures/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.png`;
@@ -88,6 +88,26 @@ export const updateUserAvatar = async (userId: string, avatarDataUrl: string) =>
   await updateDoc(doc(db, 'users', userId), { avatar_url: avatarDataUrl });
 };
 
+// --- ORGANIZATIONS ---
+export const fetchOrganizations = async (): Promise<Organization[]> => {
+  const snap = await getDocs(collection(db, 'organizations'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
+};
+
+export const subscribeToOrganizations = (cb: (orgs: Organization[]) => void) => {
+  return onSnapshot(collection(db, 'organizations'), (snap) => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Organization)));
+  });
+};
+
+export const createOrganization = async (name: string) => {
+  const docRef = await addDoc(collection(db, 'organizations'), {
+    name,
+    created_at: new Date().toISOString()
+  });
+  return docRef.id;
+};
+
 // --- PROJECTS ---
 export const fetchProjects = async (): Promise<Project[]> => {
   const snap = await getDocs(collection(db, 'projects'));
@@ -100,24 +120,26 @@ export const subscribeToProjects = (cb: (projects: Project[]) => void) => {
   });
 };
 
-export const createProject = async (title: string, description: string, end_date?: string) => {
+export const createProject = async (title: string, description: string, end_date?: string, organization_id?: string) => {
   const docRef = await addDoc(collection(db, 'projects'), {
     title,
     description,
     status: 'active',
     end_date: end_date || null,
+    organization_id: organization_id || null,
     created_at: new Date().toISOString()
   });
   return docRef.id;
 };
 
-export const updateProject = async (projectId: string, end_date?: string, start_date?: string, status?: string, title?: string, description?: string) => {
+export const updateProject = async (projectId: string, end_date?: string, start_date?: string, status?: string, title?: string, description?: string, organization_id?: string) => {
   const updates: any = {};
   if (end_date !== undefined) updates.end_date = end_date || null;
   if (start_date) updates.created_at = start_date;
   if (status) updates.status = status;
   if (title) updates.title = title;
   if (description !== undefined) updates.description = description;
+  if (organization_id !== undefined) updates.organization_id = organization_id;
   
   await updateDoc(doc(db, 'projects', projectId), updates);
 };

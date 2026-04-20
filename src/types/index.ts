@@ -76,6 +76,7 @@ export interface TaskUpdate {
   id: string;
   task_id: string;
   author_id: string;
+  author_name?: string;
   note: string;
   is_action_item?: boolean;
   created_at: string;

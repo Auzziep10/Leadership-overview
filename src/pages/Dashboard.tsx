@@ -229,7 +229,7 @@ export function Dashboard() {
     await updateTask(activeTaskId, { title: formTitle, details: formDetails || null, assignees: formAssigneeIds, due_date: formDueDate || null, status: formTaskStatus, project_id: formTaskProjectId });
     if (currentUser) {
       for (const item of formActionItems.filter(i => i.trim() !== '')) {
-        await addTaskUpdate(activeTaskId, currentUser.id, item, true);
+        await addTaskUpdate(activeTaskId, currentUser.id, item, true, currentUser.name);
       }
     }
     setModalType(null);
@@ -245,7 +245,7 @@ export function Dashboard() {
       const newTaskId = await createTask(activeProjectId, formTitle, formAssigneeIds, formDueDate, formDetails, 'active');
       if (currentUser) {
         for (const item of formActionItems.filter(i => i.trim() !== '')) {
-          await addTaskUpdate(newTaskId, currentUser.id, item, true);
+          await addTaskUpdate(newTaskId, currentUser.id, item, true, currentUser.name);
         }
       }
       setModalType(null);
@@ -269,7 +269,7 @@ export function Dashboard() {
 
   const submitUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote);
+    await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote, false, currentUser?.name);
     setModalType(null);
     setFormTaskId(''); setFormNote(''); setActiveUserId('');
     loadDashboardData();
@@ -278,7 +278,7 @@ export function Dashboard() {
   const submitActionItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser) {
-      await addTaskUpdate(activeTaskId, currentUser.id, formNote, true);
+      await addTaskUpdate(activeTaskId, currentUser.id, formNote, true, currentUser.name);
       setModalType(null);
       setFormNote('');
       loadDashboardData();

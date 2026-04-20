@@ -241,14 +241,16 @@ export const subscribeToAllTaskUpdates = (cb: (updates: TaskUpdate[]) => void) =
   });
 };
 
-export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean) => {
-  const docRef = await addDoc(collection(db, 'task_updates'), {
+export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean, authorName?: string) => {
+  const payload: any = {
     task_id: taskId,
     author_id: authorId,
     note,
     is_action_item: isActionItem || false,
     created_at: new Date().toISOString()
-  });
+  };
+  if (authorName) payload.author_name = authorName;
+  const docRef = await addDoc(collection(db, 'task_updates'), payload);
   return docRef.id;
 };
 

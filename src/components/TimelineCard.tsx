@@ -444,7 +444,8 @@ export function TimelineCard({
                       ) : (
                         (() => {
                           const renderNodeItem = (n: TaskUpdate, isDraggable: boolean = false) => {
-                            const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : 'Management');
+                            const legacyAuthorId = 'VNSPXTYN8DAWFRQ9YNFQV7TFDRU2';
+                            const authorName = n.author_name || users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : (n.author_id === legacyAuthorId ? 'Austin Patterson' : 'Management'));
                             const messages = [...(n.thread || [])];
                             if (!n.thread && n.admin_reply) {
                               messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });
@@ -775,7 +776,8 @@ export function TimelineCard({
                 <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)' }}>No logged updates yet.</div>
               ) : (
                 nodes.map(n => {
-                  const authorName = users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : 'Management');
+                  const legacyAuthorId = 'VNSPXTYN8DAWFRQ9YNFQV7TFDRU2';
+                  const authorName = n.author_name || users.find(u => u.id === n.author_id)?.name || (currentUser?.id === n.author_id ? currentUser.name : (n.author_id === legacyAuthorId ? 'Austin Patterson' : 'Management'));
                   const messages = [...(n.thread || [])];
                   if (!n.thread && n.admin_reply) {
                     messages.push({ id: 'lgcy1', author_id: n.admin_reply_by || 'admin', message: n.admin_reply, created_at: '' });

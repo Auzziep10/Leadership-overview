@@ -220,6 +220,18 @@ body {
   z-index: 3;
 }
 
+.timeline-track:hover .timeline-nodes {
+  z-index: 50;
+}
+
+.timeline-node-wrapper {
+  z-index: 1;
+}
+
+.timeline-node-wrapper:hover {
+  z-index: 50;
+}
+
 .timeline-node {
   width: 16px;
   height: 16px;

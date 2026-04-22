@@ -1457,7 +1457,7 @@ export function Dashboard() {
             ) : scanSessionId ? (
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
+                  <input type="file" accept="image/*,application/pdf" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
                 </div>
                 {!imageFile && (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)' }}>
@@ -1467,7 +1467,7 @@ export function Dashboard() {
                 )}
               </div>
             ) : (
-              <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+              <input type="file" accept="image/*,application/pdf" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
             )}
           </div>
 
@@ -1489,7 +1489,7 @@ export function Dashboard() {
             ) : scanSessionId ? (
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
+                  <input type="file" accept="image/*,application/pdf" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
                 </div>
                 {!imageFile && (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)' }}>
@@ -1499,7 +1499,7 @@ export function Dashboard() {
                 )}
               </div>
             ) : (
-              <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+              <input type="file" accept="image/*,application/pdf" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
             )}
           </div>
 

@@ -91,6 +91,17 @@ export function ScanMobile() {
         >
           {isUploading ? 'Uploading securely...' : 'Send to Desktop'}
         </button>
+
+        <div style={{ marginTop: '16px', padding: '16px', background: 'var(--color-zinc-50)', border: '1px solid var(--color-zinc-200)', borderRadius: '12px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-900)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>💡</span> Pro Tip: Native Document Scanning
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--color-zinc-600)', marginTop: '8px', lineHeight: '1.5' }}>
+            Your phone has a built-in scanner that automatically crops borders and saves as a high-quality PDF!<br/><br/>
+            <strong>iOS:</strong> Tap above, choose <strong>"Choose Files"</strong>, then tap the <strong>(⋯) menu</strong> in the top right and select <strong>"Scan Documents"</strong>.<br/><br/>
+            <strong>Android:</strong> Tap above, select <strong>"Files"</strong>, and use the Google Drive <strong>"Scan"</strong> feature.
+          </div>
+        </div>
       </div>
     </div>
   );

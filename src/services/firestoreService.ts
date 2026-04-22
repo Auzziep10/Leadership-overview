@@ -12,11 +12,12 @@ export const uploadSignatureAsset = async (base64String: string): Promise<string
   return await getDownloadURL(storageRef);
 };
 
-export const uploadImageAttachment = async (file: File): Promise<string> => {
+export const uploadImageAttachment = async (file: File): Promise<{ url: string, name: string, type: string }> => {
   const fileName = `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
   const storageRef = ref(storage, fileName);
   await uploadBytes(storageRef, file);
-  return await getDownloadURL(storageRef);
+  const url = await getDownloadURL(storageRef);
+  return { url, name: file.name, type: file.type };
 };// --- ROLES ---
 export const fetchRoles = async (): Promise<Role[]> => {
   const snap = await getDocs(collection(db, 'roles'));
@@ -248,7 +249,7 @@ export const subscribeToAllTaskUpdates = (cb: (updates: TaskUpdate[]) => void) =
   });
 };
 
-export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean, authorName?: string, imageUrl?: string) => {
+export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean, authorName?: string, imageUrl?: string, fileName?: string, fileType?: string) => {
   const payload: any = {
     task_id: taskId,
     author_id: authorId,
@@ -258,6 +259,8 @@ export const addTaskUpdate = async (taskId: string, authorId: string, note: stri
   };
   if (authorName) payload.author_name = authorName;
   if (imageUrl) payload.image_url = imageUrl;
+  if (fileName) payload.file_name = fileName;
+  if (fileType) payload.file_type = fileType;
   const docRef = await addDoc(collection(db, 'task_updates'), payload);
   return docRef.id;
 };
@@ -275,7 +278,7 @@ export const respondToAdminReply = async (updateId: string, response: string) =>
   });
 };
 
-export const addThreadMessage = async (updateId: string, authorId: string, message: string, replyToId?: string, imageUrl?: string) => {
+export const addThreadMessage = async (updateId: string, authorId: string, message: string, replyToId?: string, imageUrl?: string, fileName?: string, fileType?: string) => {
   const newMessage: any = {
     id: Math.random().toString(36).substring(2, 11),
     author_id: authorId,
@@ -287,6 +290,8 @@ export const addThreadMessage = async (updateId: string, authorId: string, messa
   }
   if (imageUrl) {
     newMessage.image_url = imageUrl;
+    if (fileName) newMessage.file_name = fileName;
+    if (fileType) newMessage.file_type = fileType;
   }
   
   await updateDoc(doc(db, 'task_updates', updateId), {

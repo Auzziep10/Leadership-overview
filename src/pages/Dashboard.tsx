@@ -9,7 +9,7 @@ import { MobileHub } from '../components/MobileHub';
 
 export function Dashboard() {
   const { user: currentUser } = useAuth();
-  const [view, setView] = useState<'team' | 'projects' | 'leads' | 'metrics' | 'archives' | 'pulse'>('team');
+  const [view, setView] = useState<'team' | 'projects' | 'leads' | 'metrics' | 'archives' | 'pulse' | 'drive'>('team');
   const [projectViewType, setProjectViewType] = useState<'list' | 'grid' | 'org'>('list');
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -289,10 +289,15 @@ export function Dashboard() {
     setIsSubmitting(true);
     try {
       let uploadedUrl = '';
+      let upFileName = '';
+      let upFileType = '';
       if (imageFile) {
-        uploadedUrl = await uploadImageAttachment(imageFile);
+        const uploadRes = await uploadImageAttachment(imageFile);
+        uploadedUrl = uploadRes.url;
+        upFileName = uploadRes.name;
+        upFileType = uploadRes.type;
       }
-      await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote, false, currentUser?.name, uploadedUrl || undefined);
+      await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote, false, currentUser?.name, uploadedUrl || undefined, upFileName || undefined, upFileType || undefined);
       setModalType(null);
       setFormTaskId(''); setFormNote(''); setActiveUserId(''); setImageFile(null);
       loadDashboardData();
@@ -318,11 +323,16 @@ export function Dashboard() {
       setIsSubmitting(true);
       try {
         let uploadedUrl = '';
+        let upFileName = '';
+        let upFileType = '';
         if (imageFile) {
-          uploadedUrl = await uploadImageAttachment(imageFile);
+          const uploadRes = await uploadImageAttachment(imageFile);
+          uploadedUrl = uploadRes.url;
+          upFileName = uploadRes.name;
+          upFileType = uploadRes.type;
         }
         const payload = modalType === 'action-item-log' ? `[LOG] ${formReply}` : formReply;
-        await addThreadMessage(activeUpdateId, currentUser.id, payload, replyToMsgId, uploadedUrl || undefined);
+        await addThreadMessage(activeUpdateId, currentUser.id, payload, replyToMsgId, uploadedUrl || undefined, upFileName || undefined, upFileType || undefined);
         setModalType(null);
         setFormReply('');
         setReplyToMsgId('');
@@ -459,6 +469,43 @@ export function Dashboard() {
 
   const isStaff = currentUser?.role !== 'owner' && currentUser?.role !== 'admin';
 
+  const allDriveFiles = React.useMemo(() => {
+    const files: any[] = [];
+    updates.forEach(u => {
+      if (u.image_url) {
+        files.push({
+          id: u.id,
+          url: u.image_url,
+          name: u.file_name || 'Attached File',
+          type: u.file_type || (u.image_url.includes('.pdf') ? 'application/pdf' : 'image/jpeg'),
+          taskId: u.task_id,
+          updateId: u.id,
+          authorId: u.author_id,
+          createdAt: u.created_at,
+          context: u.note || 'Task Update'
+        });
+      }
+      if (u.thread) {
+        u.thread.forEach((m: any) => {
+          if (m.image_url) {
+            files.push({
+              id: m.id,
+              url: m.image_url,
+              name: m.file_name || 'Attached File',
+              type: m.file_type || (m.image_url.includes('.pdf') ? 'application/pdf' : 'image/jpeg'),
+              taskId: u.task_id,
+              updateId: u.id,
+              authorId: m.author_id,
+              createdAt: m.created_at,
+              context: m.message
+            });
+          }
+        });
+      }
+    });
+    return files.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [updates]);
+
   if (loading) return <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '13px', fontWeight: 600 }}>Loading Dashboard...</div>;
 
   if (mobileMode) {
@@ -581,6 +628,23 @@ export function Dashboard() {
         >
           Staff Metrics
         </button>
+        {!isStaff && (
+          <button 
+            onClick={() => setView('drive')}
+            style={{ 
+              padding: '8px 24px', 
+              borderRadius: '99px',
+              border: '1px solid var(--color-zinc-200)',
+              background: view === 'drive' ? 'var(--color-brand-accent)' : 'white',
+              color: 'var(--color-zinc-900)',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Project Drive
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -611,9 +675,12 @@ export function Dashboard() {
               // Get all updates for user's tasks
               const userUpdates = updates.filter(update => userTasks.some(t => t.id === update.task_id));
               
+              const userFiles = allDriveFiles.filter((f: any) => f.authorId === user.id);
+              
               return (
-                <TimelineCard 
-                  key={user.id}
+                <div key={user.id} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                  <TimelineCard 
+                    key={user.id}
                   initials={user.initials}
                   avatarUrl={user.avatar_url}
                   title={user.name} 
@@ -664,6 +731,29 @@ export function Dashboard() {
                     if (confirm) await removeThreadMessage(updateId, thread);
                   }}
                 />
+                {userFiles.length > 0 && (
+                  <div style={{ padding: '0 24px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Recent Uploads</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                      {userFiles.map((f: any) => (
+                        <div key={f.id} style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ height: '120px', background: 'var(--color-zinc-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            {f.type.startsWith('image/') ? (
+                              <img src={f.url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ fontSize: '10px', color: 'var(--color-zinc-400)', fontWeight: 600 }}>PDF DOCUMENT</div>
+                            )}
+                          </div>
+                          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-900)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</a>
+                            <div style={{ fontSize: '10px', color: 'var(--color-zinc-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.context}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                </div>
               );
             })}
           </>
@@ -1043,6 +1133,52 @@ export function Dashboard() {
             </div>
           </div>
         )}
+
+        {view === 'drive' && !isStaff && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-zinc-900)', marginLeft: '8px' }}>Project Drive</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              {allDriveFiles.filter((f: any) => !searchQuery || f.name.toLowerCase().includes(searchQuery.toLowerCase()) || f.context.toLowerCase().includes(searchQuery.toLowerCase())).map((f: any) => {
+                const task = tasks.find(t => t.id === f.taskId) || archivedTasks.find(t => t.id === f.taskId);
+                const author = users.find(u => u.id === f.authorId);
+                return (
+                  <div key={f.id} style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.02)' }}>
+                    <div style={{ height: '120px', background: 'var(--color-zinc-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {f.type.startsWith('image/') ? (
+                        <img src={f.url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontSize: '10px', color: 'var(--color-zinc-400)', fontWeight: 600 }}>PDF DOCUMENT</div>
+                      )}
+                    </div>
+                    <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-zinc-900)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</a>
+                      <div style={{ fontSize: '11px', color: 'var(--color-zinc-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.context}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--color-zinc-400)', fontWeight: 600 }}>{author?.name || 'Unknown'}</span>
+                        <button 
+                          onClick={() => {
+                            if (task) {
+                              setSearchQuery(task.title);
+                              setView('projects');
+                            }
+                          }}
+                          style={{ fontSize: '10px', color: 'var(--color-zinc-600)', background: 'var(--color-zinc-100)', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', fontWeight: 700 }}
+                        >
+                          View Task
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {allDriveFiles.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-zinc-400)', fontSize: '13px' }}>
+                No files have been uploaded yet.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Modal isOpen={modalType === 'project'} onClose={() => setModalType(null)} title="Create New Project">
@@ -1267,8 +1403,8 @@ export function Dashboard() {
           <input type="text" placeholder="Quick Note (e.g. Scoped out the layers)" value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Screenshot / Attachment</label>
-            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Scan Document or Upload File</label>
+            <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
           </div>
 
           <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Uploading...' : 'Save Note & Update Timeline'}</button>
@@ -1281,8 +1417,8 @@ export function Dashboard() {
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Screenshot / Attachment</label>
-            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Scan Document or Upload File</label>
+            <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
           </div>
 
           <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send Message'}</button>

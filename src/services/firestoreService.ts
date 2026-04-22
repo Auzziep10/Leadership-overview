@@ -303,6 +303,25 @@ export const deleteTaskUpdate = async (updateId: string) => {
   await deleteDoc(doc(db, 'task_updates', updateId));
 };
 
+export const removeTaskUpdateAttachment = async (updateId: string) => {
+  await updateDoc(doc(db, 'task_updates', updateId), {
+    image_url: deleteField(),
+    file_name: deleteField(),
+    file_type: deleteField()
+  });
+};
+
+export const removeThreadMessageAttachment = async (updateId: string, threadMsgId: string, thread: any[]) => {
+  const newThread = thread.map(msg => {
+    if (msg.id === threadMsgId) {
+      const { image_url, file_name, file_type, ...rest } = msg;
+      return rest;
+    }
+    return msg;
+  });
+  await updateDoc(doc(db, 'task_updates', updateId), { thread: newThread });
+};
+
 export const removeThreadMessage = async (updateId: string, thread: any[]) => {
   await updateDoc(doc(db, 'task_updates', updateId), {
     thread

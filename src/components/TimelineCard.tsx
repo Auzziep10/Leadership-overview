@@ -72,6 +72,7 @@ interface TimelineCardProps {
   onProgressClick?: (taskId: string, pct: number) => void;
   onDeleteUpdate?: (updateId: string) => void;
   onDeleteMessage?: (updateId: string, thread: any[]) => void;
+  onDeleteAttachment?: (updateId: string, threadMsgId?: string, thread?: any[]) => void;
   tasks?: { id: string; title: string, project_id?: string }[];
   projects?: { id: string; title: string, [key: string]: any }[];
   groupByProject?: boolean;
@@ -109,6 +110,7 @@ export function TimelineCard({
   onProgressClick,
   onDeleteUpdate,
   onDeleteMessage,
+  onDeleteAttachment,
   projects = [],
   groupByProject = false,
   tasks = [],
@@ -119,6 +121,7 @@ export function TimelineCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedActionItems, setExpandedActionItems] = useState<Record<string, boolean>>({});
+  const [expandedImages, setExpandedImages] = useState<Record<string, boolean>>({});
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localTasks, setLocalTasks] = useState(assignedTasks || []);
   const [localUpdates, setLocalUpdates] = useState(updates || []);
@@ -536,10 +539,42 @@ export function TimelineCard({
                                 </div>
                                 
                                 {n.image_url && (
-                                  <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: '300px' }}>
-                                    <a href={n.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-                                      <img src={n.image_url} alt="Log Attachment" style={{ width: '100%', display: 'block' }} />
-                                    </a>
+                                  <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: expandedImages[n.id] ? '100%' : '300px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-zinc-50)', padding: '8px 12px', borderBottom: expandedImages[n.id] ? '1px solid var(--color-zinc-200)' : 'none' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-zinc-600)' }}>{n.file_name || 'Attached Document'}</span>
+                                        <button onClick={() => setExpandedImages(prev => ({...prev, [n.id]: !prev[n.id]}))} style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-200)', padding: '2px 8px', borderRadius: '99px', border: 'none', cursor: 'pointer' }}>
+                                          {expandedImages[n.id] ? 'COLLAPSE' : 'EXPAND'}
+                                        </button>
+                                      </div>
+                                      {(canDeleteUpdate || (currentUser && n.author_id === currentUser.id)) && onDeleteAttachment && (
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm("Are you absolutely sure you want to permanently delete this attached file? This cannot be undone.")) {
+                                              onDeleteAttachment(n.id);
+                                            }
+                                          }} 
+                                          style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-red-500)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px' }}
+                                          title="Delete Attachment"
+                                        >
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                      )}
+                                    </div>
+                                    {expandedImages[n.id] && (
+                                      <div style={{ padding: '8px', background: 'white' }}>
+                                        {n.file_type && n.file_type.includes('pdf') ? (
+                                          <a href={n.image_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px' }}>
+                                            📄 Open PDF Document
+                                          </a>
+                                        ) : (
+                                          <a href={n.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                                            <img src={n.image_url} alt="Log Attachment" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                                   
@@ -635,10 +670,42 @@ export function TimelineCard({
                                                   </strong>
                                                   <span>{actualMessage}</span>
                                                   {msg.image_url && (
-                                                    <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: '250px' }}>
-                                                      <a href={msg.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-                                                        <img src={msg.image_url} alt="Thread Attachment" style={{ width: '100%', display: 'block' }} />
-                                                      </a>
+                                                    <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: expandedImages[msg.id] ? '100%' : '250px' }}>
+                                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-zinc-50)', padding: '6px 12px', borderBottom: expandedImages[msg.id] ? '1px solid var(--color-zinc-200)' : 'none' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                          <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-zinc-600)' }}>{msg.file_name || 'Attached Document'}</span>
+                                                          <button onClick={() => setExpandedImages(prev => ({...prev, [msg.id]: !prev[msg.id]}))} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'var(--color-zinc-200)', padding: '2px 8px', borderRadius: '99px', border: 'none', cursor: 'pointer' }}>
+                                                            {expandedImages[msg.id] ? 'COLLAPSE' : 'EXPAND'}
+                                                          </button>
+                                                        </div>
+                                                        {(msg.author_id === currentUser?.id || currentUser?.role === 'admin' || currentUser?.role === 'owner') && onDeleteAttachment && (
+                                                          <button 
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (window.confirm("Are you absolutely sure you want to permanently delete this attached file? This cannot be undone.")) {
+                                                                onDeleteAttachment(n.id, msg.id, n.thread);
+                                                              }
+                                                            }} 
+                                                            style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-red-500)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px' }}
+                                                            title="Delete Attachment"
+                                                          >
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                          </button>
+                                                        )}
+                                                      </div>
+                                                      {expandedImages[msg.id] && (
+                                                        <div style={{ padding: '8px', background: 'white' }}>
+                                                          {msg.file_type && msg.file_type.includes('pdf') ? (
+                                                            <a href={msg.image_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--color-zinc-900)', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px' }}>
+                                                              📄 Open PDF Document
+                                                            </a>
+                                                          ) : (
+                                                            <a href={msg.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                                                              <img src={msg.image_url} alt="Thread Attachment" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />
+                                                            </a>
+                                                          )}
+                                                        </div>
+                                                      )}
                                                     </div>
                                                   )}
                                                 </div>

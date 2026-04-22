@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task, Organization } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage, uploadImageAttachment, createScanSession, subscribeToScanSession } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage, uploadImageAttachment, createScanSession, subscribeToScanSession, removeTaskUpdateAttachment, removeThreadMessageAttachment } from '../services/firestoreService';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
@@ -754,6 +754,13 @@ export function Dashboard() {
                     const confirm = window.confirm("Are you sure you want to delete this message?");
                     if (confirm) await removeThreadMessage(updateId, thread);
                   }}
+                  onDeleteAttachment={async (updateId, threadMsgId, thread) => {
+                    if (threadMsgId && thread) {
+                      await removeThreadMessageAttachment(updateId, threadMsgId, thread);
+                    } else {
+                      await removeTaskUpdateAttachment(updateId);
+                    }
+                  }}
                 />
                 {userFiles.length > 0 && (
                   <div style={{ padding: '0 24px' }}>
@@ -899,6 +906,13 @@ export function Dashboard() {
                     onDeleteMessage={async (updateId, thread) => {
                       const confirm = window.confirm("Are you sure you want to delete this message?");
                       if (confirm) await removeThreadMessage(updateId, thread);
+                    }}
+                    onDeleteAttachment={async (updateId, threadMsgId, thread) => {
+                      if (threadMsgId && thread) {
+                        await removeThreadMessageAttachment(updateId, threadMsgId, thread);
+                      } else {
+                        await removeTaskUpdateAttachment(updateId);
+                      }
                     }}
                   />
                 ) : (
@@ -1167,15 +1181,23 @@ export function Dashboard() {
                 const author = users.find(u => u.id === f.authorId);
                 return (
                   <div key={f.id} style={{ background: 'white', border: '1px solid var(--color-zinc-200)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.02)' }}>
-                    <div style={{ height: '120px', background: 'var(--color-zinc-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <div style={{ height: '120px', background: 'var(--color-zinc-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer', position: 'relative' }} onClick={() => window.open(f.url, '_blank')} title="Click to Expand">
                       {f.type.startsWith('image/') ? (
                         <img src={f.url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ fontSize: '10px', color: 'var(--color-zinc-400)', fontWeight: 600 }}>PDF DOCUMENT</div>
                       )}
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '12px' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
+                        ⛶ Expand
+                      </div>
                     </div>
                     <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-zinc-900)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</a>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                        <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-zinc-900)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{f.name}</a>
+                        <a href={f.url} target="_blank" download={f.name} rel="noopener noreferrer" style={{ color: 'var(--color-zinc-400)', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--color-brand-accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--color-zinc-400)'} title="Download File">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </a>
+                      </div>
                       <div style={{ fontSize: '11px', color: 'var(--color-zinc-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.context}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                         <span style={{ fontSize: '10px', color: 'var(--color-zinc-400)', fontWeight: 600 }}>{author?.name || 'Unknown'}</span>

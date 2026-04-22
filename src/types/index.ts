@@ -70,6 +70,7 @@ export interface ThreadMessage {
   author_id: string;
   message: string;
   created_at: string;
+  image_url?: string;
 }
 
 export interface TaskUpdate {
@@ -86,4 +87,5 @@ export interface TaskUpdate {
   order_index?: number;
   progress?: number;
   thread?: ThreadMessage[];
+  image_url?: string;
 }

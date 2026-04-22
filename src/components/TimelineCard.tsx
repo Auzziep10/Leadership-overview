@@ -61,6 +61,7 @@ interface TimelineCardProps {
   onEditDates?: () => void;
   onEditTask?: (task: any) => void;
   onActionItem?: (task: any) => void;
+  onAddTaskToProject?: (projectId: string) => void;
   onLogUpdateClick?: (taskId: string) => void;
   onReorderTasks?: (tasks: { id: string, order_index: number }[]) => void;
   onReorderUpdates?: (updates: { id: string, order_index: number }[]) => void;
@@ -97,6 +98,7 @@ export function TimelineCard({
   onEditDates,
   onEditTask,
   onActionItem,
+  onAddTaskToProject,
   onLogUpdateClick,
   onReorderTasks,
   onReorderUpdates,
@@ -275,6 +277,13 @@ export function TimelineCard({
                           + Reply Thread
                         </button>
                       )}
+                    </div>
+                  )}
+                  {node.image_url && (
+                    <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <a href={node.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                        <img src={node.image_url} alt="Attachment" style={{ width: '100%', display: 'block' }} />
+                      </a>
                     </div>
                   )}
                 </div>
@@ -525,6 +534,14 @@ export function TimelineCard({
                                 <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 500 : 400, marginTop: '4px', lineHeight: '1.5' }}>
                                   {n.note}
                                 </div>
+                                
+                                {n.image_url && (
+                                  <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: '300px' }}>
+                                    <a href={n.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                                      <img src={n.image_url} alt="Log Attachment" style={{ width: '100%', display: 'block' }} />
+                                    </a>
+                                  </div>
+                                )}
                                   
                                   {messages.length > 0 && (!n.is_action_item || expandedActionItems[n.id]) && (
                                     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column' }}>
@@ -617,6 +634,13 @@ export function TimelineCard({
                                                     </div>
                                                   </strong>
                                                   <span>{actualMessage}</span>
+                                                  {msg.image_url && (
+                                                    <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: '250px' }}>
+                                                      <a href={msg.image_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                                                        <img src={msg.image_url} alt="Thread Attachment" style={{ width: '100%', display: 'block' }} />
+                                                      </a>
+                                                    </div>
+                                                  )}
                                                 </div>
                                               );
                                             })()}
@@ -752,6 +776,17 @@ export function TimelineCard({
                         <SortableContext items={pTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '8px' }}>
                             {pTasks.map(t => <SortableTaskWrapper key={t.id} id={t.id}>{renderTask(t, -1)}</SortableTaskWrapper>)}
+                            
+                            {onAddTaskToProject && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); onAddTaskToProject(pid); }}
+                                style={{ width: '100%', fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'transparent', border: '2px dashed var(--color-zinc-300)', padding: '12px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-zinc-400)'; e.currentTarget.style.color = 'var(--color-zinc-700)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-zinc-300)'; e.currentTarget.style.color = 'var(--color-zinc-500)'; }}
+                              >
+                                + Add Task for Myself
+                              </button>
+                            )}
                           </div>
                         </SortableContext>
                       )}

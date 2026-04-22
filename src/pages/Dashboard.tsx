@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task, Organization } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage, uploadImageAttachment } from '../services/firestoreService';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
 import { MobileHub } from '../components/MobileHub';
@@ -29,7 +29,7 @@ export function Dashboard() {
   }, []);
 
   // Modal State
-  const [modalType, setModalType] = useState<'project' | 'task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | 'organization' | null>(null);
+  const [modalType, setModalType] = useState<'project' | 'task' | 'self-task' | 'update' | 'tasks-list' | 'updates-list' | 'edit-project' | 'reply-update' | 'lead' | 'lead-note' | 'edit_task' | 'action-item' | 'action-item-log' | 'progress-log' | 'organization' | null>(null);
   const [showArchives, setShowArchives] = useState(false);
   const [progressLogTaskId, setProgressLogTaskId] = useState('');
   const [progressLogActionItemId, setProgressLogActionItemId] = useState('');
@@ -65,6 +65,7 @@ export function Dashboard() {
   const [formLeadCompany, setFormLeadCompany] = useState('');
   const [formLeadEmail, setFormLeadEmail] = useState('');
   
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadDashboardData = async () => { /* deprecated, handled by snapshots */ };
@@ -255,6 +256,21 @@ export function Dashboard() {
     }
   };
 
+  const submitSelfTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting || !currentUser) return;
+    setIsSubmitting(true);
+    try {
+      const newTaskId = await createTask(activeProjectId, formTitle, [currentUser.id], formDueDate, formDetails, 'active');
+      await addTaskUpdate(newTaskId, currentUser.id, 'Created this task for myself.', false, currentUser.name);
+      
+      setModalType(null);
+      setFormTitle(''); setFormDetails(''); setFormDueDate('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleReorderTasks = async (reorderedTasks: { id: string, order_index: number }[]) => {
     await updateTaskOrders(reorderedTasks);
     // Note: We immediately request a reload from DB so changes echo correctly.
@@ -269,10 +285,20 @@ export function Dashboard() {
 
   const submitUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote, false, currentUser?.name);
-    setModalType(null);
-    setFormTaskId(''); setFormNote(''); setActiveUserId('');
-    loadDashboardData();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      let uploadedUrl = '';
+      if (imageFile) {
+        uploadedUrl = await uploadImageAttachment(imageFile);
+      }
+      await addTaskUpdate(formTaskId, activeUserId || currentUser?.id || '', formNote, false, currentUser?.name, uploadedUrl || undefined);
+      setModalType(null);
+      setFormTaskId(''); setFormNote(''); setActiveUserId(''); setImageFile(null);
+      loadDashboardData();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const submitActionItem = async (e: React.FormEvent) => {
@@ -288,12 +314,23 @@ export function Dashboard() {
   const submitReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser) {
-      const payload = modalType === 'action-item-log' ? `[LOG] ${formReply}` : formReply;
-      await addThreadMessage(activeUpdateId, currentUser.id, payload, replyToMsgId);
-      setModalType(null);
-      setFormReply('');
-      setReplyToMsgId('');
-      loadDashboardData();
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+      try {
+        let uploadedUrl = '';
+        if (imageFile) {
+          uploadedUrl = await uploadImageAttachment(imageFile);
+        }
+        const payload = modalType === 'action-item-log' ? `[LOG] ${formReply}` : formReply;
+        await addThreadMessage(activeUpdateId, currentUser.id, payload, replyToMsgId, uploadedUrl || undefined);
+        setModalType(null);
+        setFormReply('');
+        setReplyToMsgId('');
+        setImageFile(null);
+        loadDashboardData();
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -598,6 +635,7 @@ export function Dashboard() {
                   currentUser={currentUser}
                   onReplyClick={openReplyModal}
                   onLogActionItemClick={openActionItemLogModal}
+                  onAddTaskToProject={(projectId) => { setActiveProjectId(projectId); setModalType('self-task'); }}
                   onEditTask={openEditTaskModal}
                   onActionItem={openActionItemModal}
                   onLogUpdateClick={openTaskUpdateModal}
@@ -1110,6 +1148,20 @@ export function Dashboard() {
         </form>
       </Modal>
 
+      <Modal isOpen={modalType === 'self-task'} onClose={() => setModalType(null)} title="Add Task For Myself">
+        <form onSubmit={submitSelfTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>This task will be automatically assigned to you. A note will be added to the timeline indicating you created it.</div>
+          <input type="text" placeholder="Task Name" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          <textarea placeholder="Task Details & Notes (Optional)" value={formDetails} onChange={e => setFormDetails(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Specific Due Date & Time</label>
+            <input type="datetime-local" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
+          </div>
+          <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Add Task'}</button>
+        </form>
+      </Modal>
+
       <Modal isOpen={modalType === 'edit_task'} onClose={() => setModalType(null)} title="Edit Active Task">
         <form onSubmit={submitEditTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="text" placeholder="Task Name (e.g. Gather Art Files)" value={formTitle} onChange={e => setFormTitle(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
@@ -1213,7 +1265,13 @@ export function Dashboard() {
             </div>
           )}
           <input type="text" placeholder="Quick Note (e.g. Scoped out the layers)" value={formNote} onChange={e => setFormNote(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none' }} />
-          <button type="submit" className="auth-button">Save Note & Update Timeline</button>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Screenshot / Attachment</label>
+            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+          </div>
+
+          <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Uploading...' : 'Save Note & Update Timeline'}</button>
         </form>
       </Modal>
 
@@ -1221,6 +1279,12 @@ export function Dashboard() {
         <form onSubmit={submitReply} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--color-zinc-500)', marginBottom: '8px' }}>Your message will be appended to this log's active timeline thread.</div>
           <textarea placeholder="Type your message here..." value={formReply} onChange={e => setFormReply(e.target.value)} required style={{ width: '100%', padding: '12px 16px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', outline: 'none', resize: 'vertical', minHeight: '80px' }} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Screenshot / Attachment</label>
+            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+          </div>
+
           <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send Message'}</button>
         </form>
       </Modal>

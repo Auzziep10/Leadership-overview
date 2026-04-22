@@ -1,6 +1,6 @@
 import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, arrayUnion, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
 import { db, storage, firebaseConfig } from './firebaseConfig';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadString, getDownloadURL, uploadBytes } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from 'firebase/auth';
 import type { User, Role, Project, Task, TaskUpdate, Organization } from '../types';
@@ -9,6 +9,13 @@ export const uploadSignatureAsset = async (base64String: string): Promise<string
   const fileName = `signatures/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.png`;
   const storageRef = ref(storage, fileName);
   await uploadString(storageRef, base64String, 'data_url');
+  return await getDownloadURL(storageRef);
+};
+
+export const uploadImageAttachment = async (file: File): Promise<string> => {
+  const fileName = `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+  const storageRef = ref(storage, fileName);
+  await uploadBytes(storageRef, file);
   return await getDownloadURL(storageRef);
 };// --- ROLES ---
 export const fetchRoles = async (): Promise<Role[]> => {
@@ -241,7 +248,7 @@ export const subscribeToAllTaskUpdates = (cb: (updates: TaskUpdate[]) => void) =
   });
 };
 
-export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean, authorName?: string) => {
+export const addTaskUpdate = async (taskId: string, authorId: string, note: string, isActionItem?: boolean, authorName?: string, imageUrl?: string) => {
   const payload: any = {
     task_id: taskId,
     author_id: authorId,
@@ -250,6 +257,7 @@ export const addTaskUpdate = async (taskId: string, authorId: string, note: stri
     created_at: new Date().toISOString()
   };
   if (authorName) payload.author_name = authorName;
+  if (imageUrl) payload.image_url = imageUrl;
   const docRef = await addDoc(collection(db, 'task_updates'), payload);
   return docRef.id;
 };
@@ -267,7 +275,7 @@ export const respondToAdminReply = async (updateId: string, response: string) =>
   });
 };
 
-export const addThreadMessage = async (updateId: string, authorId: string, message: string, replyToId?: string) => {
+export const addThreadMessage = async (updateId: string, authorId: string, message: string, replyToId?: string, imageUrl?: string) => {
   const newMessage: any = {
     id: Math.random().toString(36).substring(2, 11),
     author_id: authorId,
@@ -276,6 +284,9 @@ export const addThreadMessage = async (updateId: string, authorId: string, messa
   };
   if (replyToId) {
     newMessage.reply_to_id = replyToId;
+  }
+  if (imageUrl) {
+    newMessage.image_url = imageUrl;
   }
   
   await updateDoc(doc(db, 'task_updates', updateId), {

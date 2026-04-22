@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { TeamHierarchy } from './pages/TeamHierarchy';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { Login } from './pages/Login';
+import { ScanMobile } from './pages/ScanMobile';
 
 const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
   const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
                 </>
               </ProtectedRoute>
             } />
+            <Route path="/scan" element={<ScanMobile />} />
           </Routes>
         </div>
       </BrowserRouter>

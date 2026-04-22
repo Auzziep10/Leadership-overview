@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TimelineCard } from '../components/TimelineCard';
 import { Modal } from '../components/Modal';
 import type { TaskUpdate, User, Project, Task, Organization } from '../types';
-import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage, uploadImageAttachment } from '../services/firestoreService';
+import { fetchUsers, fetchProjects, fetchTasks, fetchTaskUpdates, subscribeToUsers, subscribeToProjects, subscribeToTasks, subscribeToAllTaskUpdates, subscribeToOrganizations, createOrganization, createProject, createTask, addTaskUpdate, updateProject, updateTask, deleteTask, updateTaskOrders, updateTaskUpdateOrders, updateTaskUpdate, addThreadMessage, createCustomerLead, deleteTaskUpdate, removeThreadMessage, uploadImageAttachment, createScanSession, subscribeToScanSession } from '../services/firestoreService';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../services/AuthContext';
 import { MobileQuickAdd } from '../components/MobileQuickAdd';
 import { MobileHub } from '../components/MobileHub';
@@ -67,6 +68,29 @@ export function Dashboard() {
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [scanSessionId, setScanSessionId] = useState<string | null>(null);
+  const [scannedPayload, setScannedPayload] = useState<{url: string, name: string, type: string} | null>(null);
+
+  useEffect(() => {
+    if (modalType === 'update' || modalType === 'reply-update' || modalType === 'action-item-log') {
+      createScanSession().then(id => setScanSessionId(id)).catch(err => console.error("Failed to create scan session", err));
+    } else {
+      setScanSessionId(null);
+      setScannedPayload(null);
+    }
+  }, [modalType]);
+
+  useEffect(() => {
+    if (scanSessionId) {
+      const unsub = subscribeToScanSession(scanSessionId, (data) => {
+        if (data.status === 'completed' && data.url) {
+          setScannedPayload({ url: data.url, name: data.name, type: data.type });
+        }
+      });
+      return () => unsub();
+    }
+  }, [scanSessionId]);
 
   const loadDashboardData = async () => { /* deprecated, handled by snapshots */ };
 
@@ -288,10 +312,10 @@ export function Dashboard() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      let uploadedUrl = '';
-      let upFileName = '';
-      let upFileType = '';
-      if (imageFile) {
+      let uploadedUrl = scannedPayload?.url || '';
+      let upFileName = scannedPayload?.name || '';
+      let upFileType = scannedPayload?.type || '';
+      if (imageFile && !scannedPayload) {
         const uploadRes = await uploadImageAttachment(imageFile);
         uploadedUrl = uploadRes.url;
         upFileName = uploadRes.name;
@@ -322,10 +346,10 @@ export function Dashboard() {
       if (isSubmitting) return;
       setIsSubmitting(true);
       try {
-        let uploadedUrl = '';
-        let upFileName = '';
-        let upFileType = '';
-        if (imageFile) {
+        let uploadedUrl = scannedPayload?.url || '';
+        let upFileName = scannedPayload?.name || '';
+        let upFileType = scannedPayload?.type || '';
+        if (imageFile && !scannedPayload) {
           const uploadRes = await uploadImageAttachment(imageFile);
           uploadedUrl = uploadRes.url;
           upFileName = uploadRes.name;
@@ -1404,7 +1428,25 @@ export function Dashboard() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Scan Document or Upload File</label>
-            <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            {scannedPayload ? (
+              <div style={{ padding: '12px 16px', background: 'var(--color-zinc-900)', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--color-brand-accent)' }}>✓</span> Mobile Upload Ready: {scannedPayload.name}
+              </div>
+            ) : scanSessionId ? (
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
+                </div>
+                {!imageFile && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)' }}>
+                    <QRCodeSVG value={`${window.location.origin}/scan?sid=${scanSessionId}`} size={80} level="L" />
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textAlign: 'center' }}>Scan with phone to<br/>upload directly</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            )}
           </div>
 
           <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Uploading...' : 'Save Note & Update Timeline'}</button>
@@ -1418,7 +1460,25 @@ export function Dashboard() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-zinc-500)', marginLeft: '4px' }}>Scan Document or Upload File</label>
-            <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            {scannedPayload ? (
+              <div style={{ padding: '12px 16px', background: 'var(--color-zinc-900)', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--color-brand-accent)' }}>✓</span> Mobile Upload Ready: {scannedPayload.name}
+              </div>
+            ) : scanSessionId ? (
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} disabled={!!imageFile} />
+                </div>
+                {!imageFile && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)' }}>
+                    <QRCodeSVG value={`${window.location.origin}/scan?sid=${scanSessionId}`} size={80} level="L" />
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', textAlign: 'center' }}>Scan with phone to<br/>upload directly</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input type="file" accept="image/*,application/pdf" capture="environment" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '12px 16px', border: '1px dashed var(--color-zinc-300)', borderRadius: '8px', outline: 'none', background: 'var(--color-zinc-50)' }} />
+            )}
           </div>
 
           <button type="submit" className="auth-button" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send Message'}</button>

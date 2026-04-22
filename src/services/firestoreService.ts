@@ -308,3 +308,28 @@ export const removeThreadMessage = async (updateId: string, thread: any[]) => {
     thread
   });
 };
+
+export const createScanSession = async (): Promise<string> => {
+  const docRef = await addDoc(collection(db, 'scan_sessions'), {
+    created_at: new Date().toISOString(),
+    status: 'waiting'
+  });
+  return docRef.id;
+};
+
+export const subscribeToScanSession = (sessionId: string, cb: (data: any) => void) => {
+  return onSnapshot(doc(db, 'scan_sessions', sessionId), (snap) => {
+    if (snap.exists()) {
+      cb({ id: snap.id, ...snap.data() });
+    }
+  });
+};
+
+export const updateScanSession = async (sessionId: string, url: string, name: string, type: string) => {
+  await updateDoc(doc(db, 'scan_sessions', sessionId), {
+    status: 'completed',
+    url,
+    name,
+    type
+  });
+};

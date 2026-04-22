@@ -97,7 +97,7 @@ export function ScanMobile() {
           </div>
           <div style={{ fontSize: '11px', color: 'var(--color-zinc-600)', marginTop: '8px', lineHeight: '1.5' }}>
             Your phone has a built-in scanner that automatically crops borders and saves as a high-quality PDF!<br/><br/>
-            <strong>iOS:</strong> Tap above, choose <strong>"Choose Files"</strong>, navigate to the <strong>"Browse"</strong> tab at the bottom right, then tap the <strong>(⋯) menu</strong> in the top right and select <strong>"Scan Documents"</strong>.<br/><br/>
+            <strong>iOS (Apple Restriction):</strong> Safari hides the scanner inside the web picker. To scan a PDF, first open your iPhone's native <strong>Notes</strong> or <strong>Files</strong> app and scan it there. Then return here, tap above, select <strong>Choose Files</strong>, and upload it!<br/><br/>
             <strong>Android:</strong> Tap above, select <strong>"Files"</strong>, and use the Google Drive <strong>"Scan"</strong> feature.
           </div>
         </div>

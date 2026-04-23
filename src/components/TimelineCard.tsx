@@ -244,7 +244,7 @@ export function TimelineCard({
                   <div style={{ fontWeight: 600, color: 'var(--color-zinc-900)', marginBottom: '4px' }}>
                      {tasks?.find(t => t.id === node.task_id)?.title || `Task Update ${i+1}`}
                   </div>
-                  <div style={{ color: 'var(--color-zinc-500)', lineHeight: '1.4' }}>
+                  <div style={{ color: 'var(--color-zinc-500)', lineHeight: '1.4', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                     {node.note}
                   </div>
                   <div style={{ fontSize: '9px', marginTop: '6px', color: 'var(--color-zinc-400)', textTransform: 'uppercase' }}>
@@ -267,7 +267,7 @@ export function TimelineCard({
                         const mAuthorName = mAuthorObj?.name || (currentUser?.id === msg.author_id ? currentUser.name : 'Manager');
                         return (
                           <div key={msg.id} style={{ marginTop: idx > 0 ? '6px' : '0', paddingTop: idx > 0 ? '6px' : '0', borderTop: idx > 0 ? '1px solid var(--color-zinc-200)' : 'none' }}>
-                            <strong style={{ color: msg.author_id === node.author_id ? 'var(--color-zinc-600)' : color, display: 'block', marginBottom: '2px' }}>{mAuthorName} Replied:</strong> {msg.message}
+                            <strong style={{ color: msg.author_id === node.author_id ? 'var(--color-zinc-600)' : color, display: 'block', marginBottom: '2px' }}>{mAuthorName} Replied:</strong> <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.message}</span>
                           </div>
                         );
                       })}
@@ -534,7 +534,7 @@ export function TimelineCard({
                                   </div>
                                 </div>
                                 
-                                <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 500 : 400, marginTop: '4px', lineHeight: '1.5' }}>
+                                <div style={{ fontSize: '13px', color: 'var(--color-zinc-900)', fontWeight: n.is_action_item ? 500 : 400, marginTop: '4px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                                   {n.note}
                                 </div>
                                 
@@ -668,7 +668,7 @@ export function TimelineCard({
                                                       )}
                                                     </div>
                                                   </strong>
-                                                  <span>{actualMessage}</span>
+                                                  <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{actualMessage}</span>
                                                   {msg.image_url && (
                                                     <div style={{ marginTop: '8px', border: '1px solid var(--color-zinc-200)', borderRadius: '8px', overflow: 'hidden', maxWidth: expandedImages[msg.id] ? '100%' : '250px' }}>
                                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-zinc-50)', padding: '6px 12px', borderBottom: expandedImages[msg.id] ? '1px solid var(--color-zinc-200)' : 'none' }}>

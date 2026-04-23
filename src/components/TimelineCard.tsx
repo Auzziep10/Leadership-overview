@@ -866,6 +866,17 @@ export function TimelineCard({
                 <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {localTasks.map((task, idx) => <SortableTaskWrapper key={task.id} id={task.id}>{renderTask(task, idx)}</SortableTaskWrapper>)}
+                    
+                    {onAddTaskToProject && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onAddTaskToProject(''); }}
+                        style={{ width: '100%', fontSize: '12px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'transparent', border: '2px dashed var(--color-zinc-300)', padding: '12px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-zinc-400)'; e.currentTarget.style.color = 'var(--color-zinc-700)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-zinc-300)'; e.currentTarget.style.color = 'var(--color-zinc-500)'; }}
+                      >
+                        + Add New Task
+                      </button>
+                    )}
                   </div>
                 </SortableContext>
               );

@@ -444,22 +444,22 @@ export function TopNav() {
                <tr>
                  <td style="padding-right: 8px;">
                    <a href="tel:${sigPhone}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fphone.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Phone" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fphone.png?alt=media&token=6e3fb974-27e2-45fc-abcd-169298a998c3" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Phone" />
                    </a>
                  </td>
                  <td style="padding-right: 8px;">
                    <a href="sms:${sigPhone}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fchat.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Text" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fchat.png?alt=media&token=c54bf1a8-de85-4b9f-8b25-864b64086634" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Text" />
                    </a>
                  </td>
                  <td style="padding-right: 8px;">
                    <a href="${sigLinkedin}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fglobe.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="LinkedIn" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Flinkedin.png?alt=media&token=020ba905-456a-490b-a7fe-e7557f138f85" width="40" height="40" style="width:40px; height:40px; display:block;" alt="LinkedIn" />
                    </a>
                  </td>
                  <td>
                    <a href="${sigWebsite}" style="display:inline-block; text-decoration:none;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Flinkedin.png?alt=media" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Web" />
+                      <img src="https://firebasestorage.googleapis.com/v0/b/leadership-overview.firebasestorage.app/o/icons%2Fglobe.png?alt=media&token=37b6777e-65bf-40a0-bf67-28cd3716d65f" width="40" height="40" style="width:40px; height:40px; display:block;" alt="Web" />
                    </a>
                  </td>
                </tr>

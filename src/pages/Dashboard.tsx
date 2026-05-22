@@ -554,121 +554,16 @@ export function Dashboard() {
 
   return (
     <div>
-      <div className="dashboard-toggles" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
-        <button 
-          onClick={() => setView('team')}
-          style={{ 
-            padding: '8px 24px', 
-            borderRadius: '99px',
-            border: '1px solid var(--color-zinc-200)',
-            background: view === 'team' ? 'var(--color-zinc-900)' : 'white',
-            color: view === 'team' ? 'white' : 'var(--color-zinc-600)',
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          Team Workload
-        </button>
-
-        <button 
-          onClick={() => setView('projects')}
-          style={{ 
-            padding: '8px 24px', 
-            borderRadius: '99px',
-            border: '1px solid var(--color-zinc-200)',
-            background: view === 'projects' ? 'var(--color-zinc-900)' : 'white',
-            color: view === 'projects' ? 'white' : 'var(--color-zinc-600)',
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          Project Overview
-        </button>
-        {currentUser?.role === 'owner' && (
-          <button 
-            onClick={() => setView('leads')}
-            style={{ 
-              padding: '8px 24px', 
-              borderRadius: '99px',
-              border: '1px solid var(--color-zinc-200)',
-              background: view === 'leads' ? 'var(--color-zinc-900)' : 'white',
-              color: view === 'leads' ? 'white' : 'var(--color-zinc-600)',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Customer Leads
-          </button>
-        )}
-        {!isStaff && (
-          <button 
-            onClick={() => setView('archives')}
-            style={{ 
-              padding: '8px 24px', 
-              borderRadius: '99px',
-              border: '1px solid var(--color-zinc-200)',
-              background: view === 'archives' ? 'var(--color-zinc-900)' : 'white',
-              color: view === 'archives' ? 'white' : 'var(--color-zinc-600)',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Data Archives
-          </button>
-        )}
-        {!isStaff && (
-          <button 
-            onClick={() => setView('pulse')}
-            style={{ 
-              padding: '8px 24px', 
-              borderRadius: '99px',
-              border: '1px solid var(--color-zinc-200)',
-              background: view === 'pulse' ? 'var(--color-zinc-900)' : 'white',
-              color: view === 'pulse' ? 'white' : 'var(--color-zinc-600)',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Live Pulse
-          </button>
-        )}
-        <button 
-          onClick={() => setView('metrics')}
-          style={{ 
-            padding: '8px 24px', 
-            borderRadius: '99px',
-            border: '1px solid var(--color-zinc-200)',
-            background: view === 'metrics' ? 'var(--color-zinc-900)' : 'white',
-            color: view === 'metrics' ? 'white' : 'var(--color-zinc-600)',
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          Staff Metrics
-        </button>
-        {!isStaff && (
-          <button 
-            onClick={() => setView('drive')}
-            style={{ 
-              padding: '8px 24px', 
-              borderRadius: '99px',
-              border: '1px solid var(--color-zinc-200)',
-              background: view === 'drive' ? 'var(--color-brand-accent)' : 'white',
-              color: 'var(--color-zinc-900)',
-              fontWeight: 700,
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Project Drive
-          </button>
-        )}
+      <div className="dashboard-toggles" style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+        <div className="segmented-control">
+          <button onClick={() => setView('team')} className={view === 'team' ? 'active' : ''}>Team Workload</button>
+          <button onClick={() => setView('projects')} className={view === 'projects' ? 'active' : ''}>Project Overview</button>
+          {currentUser?.role === 'owner' && <button onClick={() => setView('leads')} className={view === 'leads' ? 'active' : ''}>Customer Leads</button>}
+          {!isStaff && <button onClick={() => setView('archives')} className={view === 'archives' ? 'active' : ''}>Data Archives</button>}
+          {!isStaff && <button onClick={() => setView('pulse')} className={view === 'pulse' ? 'active' : ''}>Live Pulse</button>}
+          <button onClick={() => setView('metrics')} className={view === 'metrics' ? 'active' : ''}>Staff Metrics</button>
+          {!isStaff && <button onClick={() => setView('drive')} className={view === 'drive' ? 'active' : ''} style={view === 'drive' ? { background: 'var(--color-brand-accent)', color: 'white' } : {}}>Project Drive</button>}
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1524,45 +1419,65 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      <Modal isOpen={modalType === 'tasks-list'} onClose={() => setModalType(null)} title={`${tasksListSubject} Tasks`}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+      <Modal isOpen={modalType === 'tasks-list'} onClose={() => setModalType(null)} title={`${tasksListSubject} Tasks`} maxWidth="1200px">
+        <div style={{ width: '100%', overflowX: 'hidden' }}>
           {tasksListItems.length === 0 ? (
             <div style={{ color: 'var(--color-zinc-500)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>No active tasks found.</div>
           ) : (
-            tasksListItems.map(t => {
-              const taskUpdates = updates
-                .filter(u => u.task_id === t.id)
-                .sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-              
-              return (
-                <div key={t.id} style={{ padding: '16px', background: 'var(--color-zinc-50)', borderRadius: '12px', border: '1px solid var(--color-zinc-200)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-zinc-900)' }}>{t.title}</span>
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-zinc-500)', background: 'white', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--color-zinc-200)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {t.status}
-                    </span>
-                  </div>
-                  {taskUpdates.length > 0 ? (
-                    <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-zinc-200)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {taskUpdates.map((upd, idx) => {
-                        const authorName = users.find(u => u.id === upd.author_id)?.name || 'Manager';
-                        return (
-                          <div key={upd.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: idx < taskUpdates.length - 1 ? '12px' : '0', borderBottom: idx < taskUpdates.length - 1 ? '1px dashed var(--color-zinc-100)' : 'none' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-900)' }}>{authorName}</span>
-                              <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--color-zinc-400)' }}>{new Date(upd.created_at).toLocaleDateString()} {new Date(upd.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <span style={{ fontSize: '12px', color: 'var(--color-zinc-700)', lineHeight: '1.4' }}>{upd.note}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '11px', color: 'var(--color-zinc-400)', fontStyle: 'italic', padding: '4px 0' }}>No timeline updates available.</div>
-                  )}
-                </div>
-              );
-            })
+            <TimelineCard 
+              title={tasksListSubject}
+              subtitle={`${tasksListItems.length} ACTIVE TASKS`}
+              initials={tasksListSubject ? tasksListSubject.charAt(0).toUpperCase() : 'P'}
+              color="#18181b"
+              updates={updates}
+              startDate={new Date(new Date().setHours(8,0,0,0)).toISOString()}
+              endDate={new Date(new Date().setHours(18,0,0,0)).toISOString()}
+              projects={projects}
+              organizations={organizations}
+              groupByProject={false}
+              forceExpanded={true}
+              users={users}
+              tasks={tasks}
+              assignedTasks={tasksListItems}
+              currentUser={currentUser}
+              onReplyClick={(msgId) => { setReplyToMsgId(msgId); setModalType('reply-update'); }}
+              onLogActionItemClick={(taskId) => { setFormTaskId(taskId); setModalType('action-item-log'); }}
+              onAddTaskToProject={(projectId) => { setActiveProjectId(projectId); setModalType('self-task'); }}
+              onEditTask={openEditTaskModal}
+              onActionItem={openActionItemModal}
+              onLogUpdateClick={openTaskUpdateModal}
+              onReorderTasks={handleReorderTasks}
+              onReorderUpdates={handleReorderUpdates}
+              onUpdateActionItem={async (id, updates) => { await updateTaskUpdate(id, updates); }}
+              onActionItemProgressClick={(updateId, taskId, pct) => {
+                setProgressLogActionItemId(updateId);
+                setProgressLogTaskId(taskId);
+                setProgressLogPct(pct);
+                setModalType('progress-log');
+              }}
+              onUpdateTask={async (taskId, updates) => await updateTask(taskId, updates)}
+              onProgressClick={(taskId, pct) => {
+                setProgressLogActionItemId('');
+                setProgressLogTaskId(taskId);
+                setProgressLogPct(pct);
+                setModalType('progress-log');
+              }}
+              onDeleteUpdate={async (updateId) => {
+                const confirm = window.confirm("Are you sure you want to delete this log?");
+                if (confirm) await deleteTaskUpdate(updateId);
+              }}
+              onDeleteMessage={async (updateId, thread) => {
+                const confirm = window.confirm("Are you sure you want to delete this message?");
+                if (confirm) await removeThreadMessage(updateId, thread);
+              }}
+              onDeleteAttachment={async (updateId, threadMsgId, thread) => {
+                if (threadMsgId && thread) {
+                  await removeThreadMessageAttachment(updateId, threadMsgId, thread);
+                } else {
+                  await removeTaskUpdateAttachment(updateId);
+                }
+              }}
+            />
           )}
         </div>
       </Modal>

@@ -1,21 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
   
-  --color-zinc-50: #fafafa;
-  --color-zinc-100: #f4f4f5;
-  --color-zinc-200: #e4e4e7;
-  --color-zinc-300: #d4d4d8;
-  --color-zinc-400: #a1a1aa;
-  --color-zinc-500: #71717a;
-  --color-zinc-600: #52525b;
-  --color-zinc-700: #3f3f46;
-  --color-zinc-800: #27272a;
-  --color-zinc-900: #18181b;
+  --color-zinc-50: #f8fafc;
+  --color-zinc-100: #f1f5f9;
+  --color-zinc-200: #e2e8f0;
+  --color-zinc-300: #cbd5e1;
+  --color-zinc-400: #94a3b8;
+  --color-zinc-500: #64748b;
+  --color-zinc-600: #475569;
+  --color-zinc-700: #334155;
+  --color-zinc-800: #1e293b;
+  --color-zinc-900: #0f172a;
 
-  --color-brand-accent: #facc15; /* Yellow banner color from screenshot */
+  --color-brand-accent: #3b82f6; /* Modern Electric Blue */
 }
 
 * {
@@ -26,7 +26,8 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-zinc-50);
+  background: radial-gradient(circle at top right, #ffffff, #f8fafc, #f1f5f9);
+  background-attachment: fixed;
   color: var(--color-zinc-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -42,10 +43,10 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background-color: var(--color-zinc-200);
+  background-color: var(--color-zinc-300);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-zinc-300);
+  background-color: var(--color-zinc-400);
 }
 
 /* Common Layout Utilities */
@@ -67,39 +68,48 @@ body {
 
 /* Print Shop OS Aesthetic Components */
 .top-banner {
-  background-color: var(--color-brand-accent);
-  color: var(--color-zinc-900);
+  background: linear-gradient(135deg, var(--color-brand-accent), #60a5fa);
+  color: white;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
 }
 
 .header-nav {
   height: 72px;
-  background: #ffffff;
-  border-bottom: 1px solid var(--color-zinc-100);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px -10px rgba(0,0,0,0.05);
 }
 
 .logo-text {
   font-family: var(--font-serif);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.05em;
+  background: linear-gradient(to right, var(--color-zinc-900), var(--color-zinc-600));
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .search-bar {
-  background: var(--color-zinc-50);
+  background: white;
   border: 1px solid var(--color-zinc-200);
   border-radius: 999px;
   padding: 8px 16px;
@@ -107,6 +117,12 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.search-bar:focus-within {
+  border-color: var(--color-brand-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .search-bar input {
@@ -115,36 +131,76 @@ body {
   outline: none;
   font-size: 13px;
   width: 100%;
+  color: var(--color-zinc-900);
 }
 
 .auth-button {
   background: var(--color-zinc-900);
   color: white;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
 .auth-button:hover {
   background: var(--color-zinc-700);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+}
+
+/* Segmented Control for Dashboard Toggles */
+.segmented-control {
+  display: inline-flex;
+  background: rgba(226, 232, 240, 0.6);
+  padding: 4px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+.segmented-control button {
+  padding: 8px 24px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--color-zinc-600);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.segmented-control button.active {
+  background: white;
+  color: var(--color-zinc-900);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.segmented-control button:hover:not(.active) {
+  color: var(--color-zinc-900);
+  background: rgba(255,255,255,0.4);
 }
 
 /* Cards */
 .card-container {
-  background: white;
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
   padding: 24px 32px;
   margin-bottom: 0px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.02);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px -10px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
 }
 
 .card-left {
-  flex: 0 0 160px;
+  flex: 0 0 180px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -152,8 +208,9 @@ body {
 
 .card-title {
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 700;
   font-family: var(--font-serif);
+  color: var(--color-zinc-900);
 }
 
 .card-subtitle {
@@ -161,6 +218,7 @@ body {
   color: var(--color-zinc-500);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  font-weight: 600;
 }
 
 /* Timeline Components */
@@ -176,9 +234,10 @@ body {
 
 .timeline-date {
   position: absolute;
-  top: 12px;
+  top: 8px;
   font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 .timeline-date-start {
   left: 24px;
@@ -194,8 +253,8 @@ body {
   top: 50%;
   left: 24px;
   right: 24px;
-  height: 8px;
-  background: var(--color-zinc-300);
+  height: 6px;
+  background: var(--color-zinc-200);
   transform: translateY(-50%);
   border-radius: 4px;
   z-index: 1;
@@ -205,12 +264,13 @@ body {
   position: absolute;
   top: 50%;
   left: 24px;
-  height: 8px;
-  background: var(--color-zinc-800);
+  height: 6px;
+  background: linear-gradient(90deg, var(--color-zinc-800), var(--color-zinc-600));
   transform: translateY(-50%);
   border-radius: 4px;
   z-index: 2;
-  transition: width 0.3s ease;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 10px rgba(15, 23, 42, 0.2);
 }
 
 .timeline-nodes {
@@ -239,11 +299,13 @@ body {
   background: var(--color-zinc-900);
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.8);
 }
 
 .timeline-node:hover {
-  transform: scale(1.3);
+  transform: scale(1.4);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.9), 0 4px 10px rgba(0,0,0,0.15);
 }
 
 .timeline-node.completed {
@@ -256,31 +318,21 @@ body {
   background-clip: padding-box;
 }
 
-.timeline-label {
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-zinc-600);
-  white-space: nowrap;
-}
-
 .timeline-tooltip {
   position: absolute;
   top: 24px;
   left: 50%;
-  transform: translateX(-50%);
-  background: white;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--color-zinc-200);
-  padding: 8px 12px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  width: 160px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15);
+  width: 200px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s, top 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 10;
   text-align: center;
   display: flex;
@@ -289,7 +341,7 @@ body {
 
 .timeline-node-wrapper:hover .timeline-tooltip {
   opacity: 1;
-  top: 20px;
+  transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
 
@@ -306,21 +358,24 @@ body {
   background: white;
   border: 1px solid var(--color-zinc-200);
   border-radius: 999px;
-  padding: 12px 24px;
+  padding: 10px 24px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .pill-button:hover {
-  border-color: var(--color-zinc-400);
+  border-color: var(--color-zinc-300);
   background: var(--color-zinc-50);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .signature-layout-grid {
@@ -366,7 +421,6 @@ body {
     flex: 1;
   }
   
-  /* Mobile Dashboard View Toggles */
   .dashboard-toggles {
     flex-direction: column;
     padding: 0 16px;
@@ -376,9 +430,8 @@ body {
     width: 100%;
   }
 
-  /* Card Content Wrapping */
   .card-container {
-    padding: 16px;
+    padding: 20px;
     border-radius: 20px;
   }
 
@@ -399,7 +452,6 @@ body {
     padding: 0;
   }
 
-  /* Compact the timeline borders slightly */
   .timeline-line, .timeline-progress, .timeline-nodes {
     left: 8px; right: 8px;
   }
@@ -425,7 +477,6 @@ body {
     justify-content: center;
   }
 
-  /* Mobile Task Interactions */
   .task-header {
     flex-direction: column;
     align-items: flex-start !important;

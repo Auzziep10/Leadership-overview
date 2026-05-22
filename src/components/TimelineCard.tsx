@@ -78,6 +78,8 @@ interface TimelineCardProps {
   groupByProject?: boolean;
   assignedTasks?: { id: string; title: string; status: string; details?: string; order_index?: number; project_id?: string; }[];
   organizations?: { id: string; name: string }[];
+  defaultExpanded?: boolean;
+  forceExpanded?: boolean;
 }
 
 export function TimelineCard({
@@ -115,10 +117,14 @@ export function TimelineCard({
   groupByProject = false,
   tasks = [],
   assignedTasks = [],
-  organizations = []
+  organizations = [],
+  defaultExpanded = false,
+  forceExpanded = false
 }: TimelineCardProps) {
   
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpandedState, setIsExpandedState] = useState(defaultExpanded);
+  const isExpanded = forceExpanded || isExpandedState;
+  const setIsExpanded = setIsExpandedState;
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedActionItems, setExpandedActionItems] = useState<Record<string, boolean>>({});
   const [expandedImages, setExpandedImages] = useState<Record<string, boolean>>({});
@@ -373,7 +379,7 @@ export function TimelineCard({
           visibility: isExpanded ? 'visible' : 'hidden'
         }}
       >
-        <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0 }}>
           {localTasks.length > 0 ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {(() => {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Modal } from '../components/Modal';
 import type { User, Role } from '../types';
 import { fetchRoles, fetchUsers, createRole, updateUserRoleAndHierarchy, createTeamAccount } from '../services/firestoreService';
+import { auth } from '../services/firebaseConfig';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 export function TeamHierarchy() {
   const [view, setView] = useState<'hierarchy' | 'roles'>('hierarchy');
@@ -59,6 +61,20 @@ export function TeamHierarchy() {
     await updateUserRoleAndHierarchy(editingUser.id, editRoleId, editReportsTo, editSystemRole);
     setEditingUser(null);
     loadData();
+  };
+
+  const handleResetUserPassword = async () => {
+    if (!editingUser || !editingUser.email) return;
+    const confirmSend = window.confirm(`Send a password reset email to ${editingUser.name} (${editingUser.email})?`);
+    if (!confirmSend) return;
+
+    try {
+      await sendPasswordResetEmail(auth, editingUser.email);
+      alert(`Password reset email sent successfully to ${editingUser.email}!`);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to send password reset email: ${err.message}`);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -245,6 +261,37 @@ export function TeamHierarchy() {
               <option value="admin">Admin (Standard Dashboard Access)</option>
               <option value="owner">Owner (Full Operations Access)</option>
             </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid var(--color-zinc-100)', paddingTop: '16px', marginTop: '8px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Security Actions</label>
+            <button 
+              type="button" 
+              onClick={handleResetUserPassword} 
+              style={{ 
+                padding: '12px 16px', 
+                border: '1px solid #ef4444', 
+                borderRadius: '8px', 
+                background: 'white', 
+                color: '#ef4444', 
+                fontWeight: 600, 
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#fef2f2';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'white';
+              }}
+            >
+              ✉️ Send Password Reset Email
+            </button>
           </div>
 
           <button type="submit" className="auth-button" style={{ marginTop: '8px' }}>Save Layout Changes</button>

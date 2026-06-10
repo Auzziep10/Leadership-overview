@@ -58,6 +58,10 @@ export const subscribeToUsers = (cb: (users: User[]) => void) => {
   });
 };
 
+export const deleteUser = async (userId: string) => {
+  await deleteDoc(doc(db, 'users', userId));
+};
+
 export const updateUserRoleAndHierarchy = async (userId: string, role_id: string, reports_to: string | null, systemRole?: string) => {
   const updates: any = { 
     role_id: role_id || null, 

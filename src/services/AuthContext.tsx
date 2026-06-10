@@ -24,35 +24,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (userDoc.exists()) {
             setUser({ id: userDoc.id, ...userDoc.data() } as User);
           } else {
-            // Auto-heal for accounts made before Firestore was fully initialized
+            // Auto-heal ONLY for owner
             const isAdmin = firebaseUser.email === 'austin@wovnapparel.com';
-            const newUserData = {
-              name: firebaseUser.email?.split('@')[0] || "User",
-              email: firebaseUser.email || "",
-              role: isAdmin ? 'owner' : 'staff',
-              initials: firebaseUser.email ? firebaseUser.email.charAt(0).toUpperCase() : "U"
-            };
-            
-            // Write to the newly active Firestore
-            try {
-              import('firebase/firestore').then(({ setDoc }) => {
-                setDoc(doc(db, "users", firebaseUser.uid), newUserData).catch(console.error);
-              });
-            } catch(e){}
-            
-            setUser({ id: firebaseUser.uid, ...newUserData });
+            if (isAdmin) {
+              const newUserData = {
+                name: firebaseUser.email?.split('@')[0] || "User",
+                email: firebaseUser.email || "",
+                role: 'owner',
+                initials: "A"
+              };
+              
+              // Write to the newly active Firestore
+              try {
+                import('firebase/firestore').then(({ setDoc }) => {
+                  setDoc(doc(db, "users", firebaseUser.uid), newUserData).catch(console.error);
+                });
+              } catch(e){}
+              
+              setUser({ id: firebaseUser.uid, ...newUserData });
+            } else {
+              // Sign out deleted users
+              await auth.signOut();
+              setUser(null);
+            }
           }
         } catch(e) {
           console.error("Error reading user doc, likely Firestore Rules:", e);
           // Fallback if firestore read is denied
           const isAdmin = firebaseUser.email === 'austin@wovnapparel.com';
-          setUser({
-            id: firebaseUser.uid,
-            name: firebaseUser.email?.split('@')[0] || "User",
-            email: firebaseUser.email || "",
-            role: isAdmin ? 'owner' : 'staff',
-            initials: firebaseUser.email ? firebaseUser.email.charAt(0).toUpperCase() : "U"
-          });
+          if (isAdmin) {
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.email?.split('@')[0] || "User",
+              email: firebaseUser.email || "",
+              role: 'owner',
+              initials: "A"
+            });
+          } else {
+            await auth.signOut();
+            setUser(null);
+          }
         }
       } else {
         setUser(null);

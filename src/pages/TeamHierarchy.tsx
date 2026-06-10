@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../components/Modal';
 import type { User, Role } from '../types';
-import { fetchRoles, fetchUsers, createRole, updateUserRoleAndHierarchy, createTeamAccount } from '../services/firestoreService';
+import { fetchRoles, fetchUsers, createRole, updateUserRoleAndHierarchy, createTeamAccount, deleteUser } from '../services/firestoreService';
 import { auth } from '../services/firebaseConfig';
 import { sendPasswordResetEmail } from 'firebase/auth';
 
@@ -77,6 +77,22 @@ export function TeamHierarchy() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!editingUser) return;
+    const confirmDelete = window.confirm(`Are you absolutely sure you want to delete ${editingUser.name}? This will remove them from the system hierarchy.\n\nNote: Because this is a client-side app, their Firebase Login credentials remain active. To fully revoke their login access, make sure to also delete their account from the Firebase Console (Authentication tab).`);
+    if (!confirmDelete) return;
+
+    try {
+      await deleteUser(editingUser.id);
+      setEditingUser(null);
+      alert(`User ${editingUser.name} deleted successfully!`);
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to delete user: ${err.message}`);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegWait(true);
@@ -144,7 +160,7 @@ export function TeamHierarchy() {
     );
   };
 
-  const topLevelUsers = users.filter(u => !u.reports_to);
+  const topLevelUsers = users.filter(u => !u.reports_to || !users.some(parent => parent.id === u.reports_to));
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '13px', fontWeight: 600 }}>Loading Team Data...</div>;
 
@@ -265,33 +281,63 @@ export function TeamHierarchy() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid var(--color-zinc-100)', paddingTop: '16px', marginTop: '8px' }}>
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Security Actions</label>
-            <button 
-              type="button" 
-              onClick={handleResetUserPassword} 
-              style={{ 
-                padding: '12px 16px', 
-                border: '1px solid #ef4444', 
-                borderRadius: '8px', 
-                background: 'white', 
-                color: '#ef4444', 
-                fontWeight: 600, 
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#fef2f2';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-              }}
-            >
-              ✉️ Send Password Reset Email
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button 
+                type="button" 
+                onClick={handleResetUserPassword} 
+                style={{ 
+                  padding: '12px 16px', 
+                  border: '1px solid var(--color-zinc-200)', 
+                  borderRadius: '8px', 
+                  background: 'white', 
+                  color: 'var(--color-zinc-700)', 
+                  fontWeight: 600, 
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--color-zinc-50)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                ✉️ Send Password Reset Email
+              </button>
+
+              <button 
+                type="button" 
+                onClick={handleDeleteUser} 
+                style={{ 
+                  padding: '12px 16px', 
+                  border: '1px solid #ef4444', 
+                  borderRadius: '8px', 
+                  background: 'white', 
+                  color: '#ef4444', 
+                  fontWeight: 600, 
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#fef2f2';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                🗑️ Delete User Account
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="auth-button" style={{ marginTop: '8px' }}>Save Layout Changes</button>
